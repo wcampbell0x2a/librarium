@@ -1,0 +1,12 @@
+[package]
+name = "cpio-deku"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = ["std"]
+std = ["deku/std", "alloc"]
+alloc = ["deku/alloc"]
+
+[dependencies]
+deku = { version = "0.13", default-features = false }
