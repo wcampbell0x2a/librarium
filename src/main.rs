@@ -3,9 +3,12 @@ use std::fs;
 use deku::DekuContainerRead;
 
 fn main() {
-    let bytes = fs::read("test_cpio/sample.cpio").unwrap();
-    println!("{:x?}", bytes);
+    let arg = std::env::args().nth(1).unwrap();
+    let bytes = fs::read(arg).unwrap();
 
     let (_, cpio_archive) = cpio_deku::Archive::from_bytes((&bytes, 0)).unwrap();
-    println!("{:#x?}", cpio_archive);
+    for cpio in cpio_archive.objects {
+        println!("{:#x?}", cpio.header);
+        println!("{:#x?}", cpio.name);
+    }
 }
