@@ -1,3 +1,5 @@
+//! Copy in/out file archives
+
 use std::ffi::CString;
 
 use deku::bitvec::{BitSlice, BitVec, Msb0};
@@ -21,13 +23,13 @@ impl Archive {
 #[derive(DekuWrite, DekuRead, Debug, Clone)]
 pub struct Object {
     pub header: CpioNewcHeader,
-    #[deku(assert = "name.as_bytes().len() == header.namesize.inner as usize - 1")]
+    #[deku(assert = "name.as_bytes().len() == header.namesize.value as usize - 1")]
     pub name: CString,
-    #[deku(count = "pad_to_4(6 + header.namesize.inner as usize)")]
+    #[deku(count = "pad_to_4(6 + header.namesize.value as usize)")]
     name_pad: Vec<u8>,
-    #[deku(count = "header.filesize.inner")]
+    #[deku(count = "header.filesize.value")]
     pub file: Vec<u8>,
-    #[deku(count = "pad_to_4(header.filesize.inner as usize)")]
+    #[deku(count = "pad_to_4(header.filesize.value as usize)")]
     file_pad: Vec<u8>,
 }
 
@@ -64,7 +66,7 @@ pub struct Ascii {
         reader = "Self::read(deku::rest)",
         writer = "Self::write(deku::output)"
     )]
-    inner: u32,
+    pub value: u32,
 }
 
 impl Ascii {
