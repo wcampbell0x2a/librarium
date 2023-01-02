@@ -68,7 +68,7 @@ pub struct Ascii {
 }
 
 impl Ascii {
-    fn read(rest: &BitSlice<Msb0, u8>) -> Result<(&BitSlice<Msb0, u8>, u32), DekuError> {
+    fn read(rest: &BitSlice<u8, Msb0>) -> Result<(&BitSlice<u8, Msb0>, u32), DekuError> {
         let (rest, value) = <[u8; 8]>::read(rest, ())?;
         let s = core::str::from_utf8(&value).unwrap();
         let value = u32::from_str_radix(s, 16).unwrap();
@@ -76,7 +76,7 @@ impl Ascii {
     }
 
     //TODO: impl write
-    fn write(_output: &mut BitVec<Msb0, u8>) -> Result<(), DekuError> {
+    fn write(_output: &mut BitVec<u8, Msb0>) -> Result<(), DekuError> {
         Ok(())
     }
 }
