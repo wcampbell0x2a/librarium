@@ -13,7 +13,7 @@ fn main() {
     fs::create_dir_all(root_path).unwrap();
 
     let (_, cpio_archive) = cpio_deku::Archive::from_bytes((&bytes, 0)).unwrap();
-    for cpio in cpio_archive.objects {
+    for cpio in &cpio_archive.objects {
         println!("{:#x?}", cpio.header);
         println!("{:#x?}", cpio.name);
 
@@ -27,11 +27,11 @@ fn main() {
             options.create(true);
             options.write(true);
             let mut file = options.open(path).unwrap();
-            file.write_all(&cpio.file).unwrap();
+            let _ = file.write_all(&cpio.file);
         } else {
             // dir
             // TODO: set mode bits?
-            fs::create_dir(path).unwrap();
+            let _ = fs::create_dir(path);
         }
     }
 }

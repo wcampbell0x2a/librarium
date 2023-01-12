@@ -1,6 +1,7 @@
 //! Copy in/out file archives
 
 use std::ffi::CString;
+use std::io::Write;
 
 use deku::bitvec::{BitSlice, BitVec, Msb0};
 use deku::prelude::*;
@@ -62,10 +63,7 @@ fn pad_to_4(len: usize) -> usize {
 
 #[derive(DekuWrite, DekuRead, Debug, Clone, Default)]
 pub struct Ascii {
-    #[deku(
-        reader = "Self::read(deku::rest)",
-        writer = "Self::write(deku::output)"
-    )]
+    #[deku(reader = "Self::read(deku::rest)", writer = "self.write(deku::output)")]
     pub value: u32,
 }
 
@@ -77,8 +75,13 @@ impl Ascii {
         Ok((rest, value))
     }
 
-    //TODO: impl write
-    fn write(_output: &mut BitVec<u8, Msb0>) -> Result<(), DekuError> {
+    fn write(&self, output: &mut BitVec<u8, Msb0>) -> Result<(), DekuError> {
+        let s = format!("{:08x?}", self.value);
+        let bytes = s.as_bytes();
+
+        for byte in bytes {
+            output.write_all(&[byte + 0x18]).unwrap();
+        }
         Ok(())
     }
 }
