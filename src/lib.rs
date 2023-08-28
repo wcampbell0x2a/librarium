@@ -1,9 +1,9 @@
 //! Copy in/out file archives
 
 use std::ffi::CString;
-use std::io::Write;
+use std::io::{Read, Write};
 
-use deku::bitvec::{BitSlice, BitVec, Msb0};
+use deku::bitvec::{BitVec, Msb0};
 use deku::prelude::*;
 
 const MAGIC: [u8; 6] = [0x30, 0x37, 0x30, 0x37, 0x30, 0x31];
@@ -63,16 +63,19 @@ fn pad_to_4(len: usize) -> usize {
 
 #[derive(DekuWrite, DekuRead, Debug, Clone, Default)]
 pub struct Ascii {
-    #[deku(reader = "Self::read(deku::rest)", writer = "self.write(deku::output)")]
+    #[deku(
+        reader = "Self::read(deku::reader)",
+        writer = "self.write(deku::output)"
+    )]
     pub value: u32,
 }
 
 impl Ascii {
-    fn read(rest: &BitSlice<u8, Msb0>) -> Result<(&BitSlice<u8, Msb0>, u32), DekuError> {
-        let (rest, value) = <[u8; 8]>::read(rest, ())?;
+    fn read<R: Read>(reader: &mut Reader<R>) -> Result<u32, DekuError> {
+        let value = <[u8; 8]>::from_reader_with_ctx(reader, ())?;
         let s = core::str::from_utf8(&value).unwrap();
         let value = u32::from_str_radix(s, 16).unwrap();
-        Ok((rest, value))
+        Ok(value)
     }
 
     fn write(&self, output: &mut BitVec<u8, Msb0>) -> Result<(), DekuError> {
@@ -80,7 +83,7 @@ impl Ascii {
         let bytes = s.as_bytes();
 
         for byte in bytes {
-            output.write_all(&[byte + 0x18]).unwrap();
+            output.write(&[byte + 0x18]).unwrap();
         }
         Ok(())
     }
