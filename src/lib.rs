@@ -83,7 +83,7 @@ impl Ascii {
         let bytes = s.as_bytes();
 
         for byte in bytes {
-            output.write(&[byte + 0x18]).unwrap();
+            output.write_all(&[byte + 0x18]).unwrap();
         }
         Ok(())
     }
