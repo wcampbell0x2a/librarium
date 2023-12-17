@@ -9,4 +9,4 @@ std = ["deku/std", "alloc"]
 alloc = ["deku/alloc"]
 
 [dependencies]
-deku = { git = "https://github.com/sharksforarms/deku", branch = "impl-reader" }
+deku = { git = "https://github.com/sharksforarms/deku", branch = "impl-writer" }
