@@ -3,7 +3,6 @@
 use std::ffi::CString;
 use std::io::{Read, Write};
 
-use deku::bitvec::{BitVec, Msb0};
 use deku::prelude::*;
 
 const MAGIC: [u8; 6] = [0x30, 0x37, 0x30, 0x37, 0x30, 0x31];
@@ -65,7 +64,7 @@ fn pad_to_4(len: usize) -> usize {
 pub struct Ascii {
     #[deku(
         reader = "Self::read(deku::reader)",
-        writer = "self.write(deku::output)"
+        writer = "self.write(deku::writer)"
     )]
     pub value: u32,
 }
@@ -78,12 +77,13 @@ impl Ascii {
         Ok(value)
     }
 
-    fn write(&self, output: &mut BitVec<u8, Msb0>) -> Result<(), DekuError> {
+    fn write<W: Write>(&self, writer: &mut Writer<W>) -> Result<(), DekuError> {
         let s = format!("{:08x?}", self.value);
         let bytes = s.as_bytes();
 
         for byte in bytes {
-            output.write_all(&[byte + 0x18]).unwrap();
+            let b = &[byte + 0x18];
+            writer.write_bytes(b)?;
         }
         Ok(())
     }
