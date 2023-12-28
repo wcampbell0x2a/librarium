@@ -62,10 +62,7 @@ fn pad_to_4(len: usize) -> usize {
 
 #[derive(DekuWrite, DekuRead, Debug, Clone, Default)]
 pub struct Ascii {
-    #[deku(
-        reader = "Self::read(deku::reader)",
-        writer = "self.write(deku::writer)"
-    )]
+    #[deku(reader = "Self::read(deku::reader)", writer = "self.write(deku::writer)")]
     pub value: u32,
 }
 
