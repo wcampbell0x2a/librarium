@@ -1,38 +1,62 @@
 use std::fs::{self, File, OpenOptions};
-use std::io::{BufReader, Write};
-use std::os::unix::prelude::OpenOptionsExt;
-use std::path::PathBuf;
+use std::io::SeekFrom;
+use std::io::{BufReader, Seek, Write};
+use std::path::{Path, PathBuf};
 
-use deku::DekuContainerRead;
+use clap::Parser;
+use cpio_deku::{ArchiveReader, CpioReader};
+
+use clap::builder::styling::*;
+pub fn styles() -> clap::builder::Styles {
+    Styles::styled()
+        .header(AnsiColor::Green.on_default() | Effects::BOLD)
+        .usage(AnsiColor::Green.on_default() | Effects::BOLD)
+        .literal(AnsiColor::Cyan.on_default() | Effects::BOLD)
+        .placeholder(AnsiColor::Cyan.on_default())
+        .error(AnsiColor::Red.on_default() | Effects::BOLD)
+        .valid(AnsiColor::Cyan.on_default() | Effects::BOLD)
+        .invalid(AnsiColor::Yellow.on_default() | Effects::BOLD)
+}
+
+/// tool to extract and list cpio filesystems
+#[derive(Parser)]
+#[command(author,
+          version,
+          name = "uncpio",
+          max_term_width = 98,
+          styles = styles(),
+)]
+struct Args {
+    /// CPIO path
+    archive: Option<PathBuf>,
+
+    /// Skip BYTES at the start of FILESYSTEM
+    #[arg(short, long, default_value_t = 0, name = "BYTES")]
+    offset: u64,
+
+    /// Extract to [PATHNAME]
+    #[arg(short, long, default_value = "out", name = "PATHNAME")]
+    dest: PathBuf,
+}
 
 fn main() {
-    let arg = std::env::args().nth(1).unwrap();
-    let file = File::options().read(true).open(arg).unwrap();
-    let mut reader = BufReader::new(file);
+    let args = Args::parse();
 
-    let root_path = "cpio-root";
-    fs::create_dir_all(root_path).unwrap();
+    let mut file = BufReader::new(File::open(args.archive.as_ref().unwrap()).unwrap());
+    file.seek(SeekFrom::Start(args.offset)).unwrap();
 
-    let (_, cpio_archive) = cpio_deku::Archive::from_reader((&mut reader, 0)).unwrap();
-    for cpio in &cpio_archive.objects {
-        println!("{:#x?}", cpio.header);
-        println!("{:#x?}", cpio.name);
+    // Extract all
+    let mut archive = ArchiveReader::from_reader_with_offset(&mut file, args.offset).unwrap();
+    for object in &archive.objects.inner {
+        let filepath = Path::new(&args.dest).join(object.name.clone().into_string().unwrap());
 
-        let mut path: PathBuf = root_path.into();
-        path.push(cpio.name.to_str().unwrap());
-
-        // file
-        if cpio.header.filesize.value > 0 {
-            let mut options = OpenOptions::new();
-            options.mode(cpio.header.mode.value);
-            options.create(true);
-            options.write(true);
-            let mut file = options.open(path).unwrap();
-            let _ = file.write_all(&cpio.file);
-        } else {
-            // dir
-            // TODO: set mode bits?
-            let _ = fs::create_dir(path);
+        println!("extracting: {:?} -> {:02x?}", object.name, filepath);
+        println!("{:?}", object.header);
+        if object.header.filesize.value != 0 {
+            let bytes = archive.reader.extract_data(object).unwrap();
+            let _ = fs::create_dir_all(filepath.parent().unwrap());
+            let mut out = OpenOptions::new().write(true).create(true).open(filepath).unwrap();
+            out.write_all(&bytes).unwrap();
         }
     }
 }
