@@ -9,4 +9,10 @@ std = ["deku/std", "alloc"]
 alloc = ["deku/alloc"]
 
 [dependencies]
-deku = { git = "https://github.com/sharksforarms/deku", branch = "impl-writer" }
+clap = { version = "4.4.12", features = ["derive"] }
+deku = { git = "https://github.com/sharksforarms/deku", branch = "impl-reader-seek" }
+thiserror = "1.0.52"
+
+[dev-dependencies]
+tempfile = "3.9.0"
+test-assets = { git  = "https://github.com/wcampbell0x2a/test-assets", branch = "replace-curl-ureq" }
