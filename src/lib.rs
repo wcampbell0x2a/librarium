@@ -57,13 +57,17 @@ impl<R: ReadSeek> Seek for ReaderWithOffset<R> {
 
 impl<T: ReadSeek> CpioReader for T {}
 pub trait CpioReader: ReadSeek {
-    fn extract_data(&mut self, object: &Object) -> Result<Vec<u8>, CpioError> {
+    fn extract_data<W>(&mut self, object: &Object, writer: &mut W) -> Result<(), CpioError>
+    where
+        W: Write,
+    {
         // found the file, seek forward
         if let Data::Offset(offset) = object.data {
             self.seek(SeekFrom::Start(offset)).unwrap();
             let mut buf = vec![0; object.header.filesize.value as usize];
             self.read_exact(&mut buf).unwrap();
-            Ok(buf)
+            writer.write_all(&buf)?;
+            Ok(())
         } else {
             panic!("no offset! TODO improve this");
         }
@@ -167,14 +171,22 @@ impl<'b> ArchiveReader<'b> {
         Ok(Self { reader, objects })
     }
 
-    pub fn extract_by_name(&mut self, name: CString) -> Result<Vec<u8>, CpioError> {
+    pub fn extract_by_name<W>(
+        &mut self,
+        name: CString,
+        writer: &mut W,
+    ) -> Result<Option<()>, CpioError>
+    where
+        W: Write,
+    {
         for object in &self.objects.inner {
             if name == object.name {
-                return self.reader.extract_data(object);
+                self.reader.extract_data(object, writer)?;
+                return Ok(Some(()));
             }
         }
 
-        todo!("couldn't find name, this will be an error in the future");
+        Ok(None)
     }
 }
 

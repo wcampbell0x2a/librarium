@@ -26,7 +26,8 @@ let mut archive = ArchiveReader::from_reader(&mut file).unwrap();
 
 // extract bytes from all in archive
 for object in &archive.objects.inner {
-    let bytes = archive.reader.extract_data(object).unwrap();
+    let mut out = OpenOptions::new().write(true).create(true).open(object.name).unwrap();
+    archive.reader.extract_data(object, &mut out).unwrap();
 }
 ```
 

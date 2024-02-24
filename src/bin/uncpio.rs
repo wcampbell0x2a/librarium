@@ -1,6 +1,6 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::SeekFrom;
-use std::io::{BufReader, Seek, Write};
+use std::io::{BufReader, Seek};
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
@@ -53,10 +53,10 @@ fn main() {
         println!("extracting: {:?} -> {:02x?}", object.name, filepath);
         println!("{:?}", object.header);
         if object.header.filesize.value != 0 {
-            let bytes = archive.reader.extract_data(object).unwrap();
             let _ = fs::create_dir_all(filepath.parent().unwrap());
-            let mut out = OpenOptions::new().write(true).create(true).open(filepath).unwrap();
-            out.write_all(&bytes).unwrap();
+            let mut out =
+                OpenOptions::new().write(true).create(true).truncate(true).open(filepath).unwrap();
+            archive.reader.extract_data(object, &mut out).unwrap();
         }
     }
 }
