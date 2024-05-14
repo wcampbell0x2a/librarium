@@ -59,7 +59,7 @@ impl<T: ReadSeek> CpioReader for T {}
 pub trait CpioReader: ReadSeek {
     fn extract_data<W>(&mut self, object: &Object, writer: &mut W) -> Result<(), CpioError>
     where
-        W: Write,
+        W: Write + Seek,
     {
         // found the file, seek forward
         if let Data::Offset(offset) = object.data {
@@ -101,7 +101,7 @@ impl DekuReader<'_, u32> for Data {
 }
 
 impl Data {
-    fn writer<W: Write>(&mut self, writer: &mut Writer<W>, _: u32) -> Result<(), DekuError> {
+    fn writer<W: Write + Seek>(&mut self, writer: &mut Writer<W>, _: u32) -> Result<(), DekuError> {
         if let Self::Reader(reader) = self {
             // read from reader
             let mut data = vec![];
@@ -129,7 +129,7 @@ pub struct Objects {
 }
 
 impl Objects {
-    fn writer<W: ::deku::no_std_io::Write>(
+    fn writer<W: ::deku::no_std_io::Write + Seek>(
         &mut self,
         __deku_writer: &mut ::deku::writer::Writer<W>,
         _: (),
@@ -177,7 +177,7 @@ impl<'b> ArchiveReader<'b> {
         writer: &mut W,
     ) -> Result<Option<()>, CpioError>
     where
-        W: Write,
+        W: Write + Seek,
     {
         for object in &self.objects.inner {
             if name == object.name {
@@ -190,14 +190,17 @@ impl<'b> ArchiveReader<'b> {
     }
 }
 
+pub trait WriteSeek: std::io::Write + Seek {}
+impl<T: Write + Seek> WriteSeek for T {}
+
 pub struct ArchiveWriter<'a> {
-    pub writer: Box<dyn Write + 'a>,
+    pub writer: Box<dyn WriteSeek + 'a>,
     pub objects: Objects,
     pad_len: u32,
 }
 
 impl<'a> ArchiveWriter<'a> {
-    pub fn new(writer: Box<dyn Write + 'a>) -> Self {
+    pub fn new(writer: Box<dyn WriteSeek + 'a>) -> Self {
         Self { writer, objects: Objects { inner: vec![] }, pad_len: 0x400 }
     }
 
@@ -313,7 +316,7 @@ pub struct Object {
 
 impl Object {
     #[allow(unused_variables)]
-    fn writer<W: ::deku::no_std_io::Write>(
+    fn writer<W: ::deku::no_std_io::Write + Seek>(
         &mut self,
         __deku_writer: &mut ::deku::writer::Writer<W>,
         _: (),
@@ -378,7 +381,7 @@ impl Ascii {
 
     // [30, 30, 38, 42, 32, 38, 37, 34]
     // "008B2874"
-    fn write<W: Write>(&self, writer: &mut Writer<W>) -> Result<(), DekuError> {
+    fn write<W: Write + Seek>(&self, writer: &mut Writer<W>) -> Result<(), DekuError> {
         let bytes = self.value.to_be_bytes();
         for b in bytes {
             let left = (b & 0xf0) >> 4;

@@ -32,17 +32,17 @@ fn test_simple_in_out_newc_files() {
     let b_assert = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n".as_bytes();
     let c_assert = "cccccccccccccccccccccccccccccc\ncccc\nc\nc\nc\nc\nc\n".as_bytes();
 
-    let mut a = Vec::new();
+    let mut a = Cursor::new(Vec::new());
     archive.extract_by_name(CString::new("cpio-in/a").unwrap(), &mut a).unwrap();
-    assert_eq!(a, a_assert);
+    assert_eq!(a.into_inner(), a_assert);
 
-    let mut b = Vec::new();
+    let mut b = Cursor::new(Vec::new());
     archive.extract_by_name(CString::new("cpio-in/b").unwrap(), &mut b).unwrap();
-    assert_eq!(b, b_assert);
+    assert_eq!(b.into_inner(), b_assert);
 
-    let mut c = Vec::new();
+    let mut c = Cursor::new(Vec::new());
     archive.extract_by_name(CString::new("cpio-in/c").unwrap(), &mut c).unwrap();
-    assert_eq!(c, c_assert);
+    assert_eq!(c.into_inner(), c_assert);
 
     let file = File::create(&new_path).unwrap();
     let mut writer = ArchiveWriter::new(Box::new(file));
