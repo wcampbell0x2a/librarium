@@ -4,11 +4,22 @@ use std::ffi::CString;
 use std::io::{self, Cursor};
 use std::io::{Read, Seek, SeekFrom, Write};
 
+use ::deku::DekuError;
 use deku::prelude::*;
+use deku::writer::Writer;
 use thiserror::Error;
 
 const MAGIC: [u8; 6] = [b'0', b'7', b'0', b'7', b'0', b'1'];
 const TRAILER: &str = "TRAILER!!!";
+
+// Much like DekuWriter, but lets us mutate ourself
+trait MutWriter<Ctx = ()> {
+    fn to_mutwriter<W: Write + Seek>(
+        &mut self,
+        deku_writer: &mut Writer<W>,
+        ctx: Ctx,
+    ) -> core::result::Result<(), DekuError>;
+}
 
 /// Errors generated from library
 #[derive(Error, Debug)]
@@ -100,8 +111,12 @@ impl DekuReader<'_, u32> for Data {
     }
 }
 
-impl Data {
-    fn writer<W: Write + Seek>(&mut self, writer: &mut Writer<W>, _: u32) -> Result<(), DekuError> {
+impl MutWriter<u32> for Data {
+    fn to_mutwriter<W: Write + Seek>(
+        &mut self,
+        writer: &mut Writer<W>,
+        _: u32,
+    ) -> Result<(), DekuError> {
         if let Self::Reader(reader) = self {
             // read from reader
             let mut data = vec![];
@@ -128,14 +143,14 @@ pub struct Objects {
     pub inner: Vec<Object>,
 }
 
-impl Objects {
-    fn writer<W: ::deku::no_std_io::Write + Seek>(
+impl MutWriter for Objects {
+    fn to_mutwriter<W: Write + Seek>(
         &mut self,
-        __deku_writer: &mut ::deku::writer::Writer<W>,
+        deku_writer: &mut Writer<W>,
         _: (),
-    ) -> core::result::Result<(), ::deku::DekuError> {
+    ) -> core::result::Result<(), DekuError> {
         for i in &mut self.inner {
-            i.writer(__deku_writer, ())?;
+            i.to_mutwriter(deku_writer, ())?;
         }
         Ok(())
     }
@@ -254,7 +269,7 @@ impl<'a> ArchiveWriter<'a> {
         self.push_file(data, path, header)?;
 
         let mut writer = Writer::new(&mut self.writer);
-        self.objects.writer(&mut writer, ()).unwrap();
+        self.objects.to_mutwriter(&mut writer, ()).unwrap();
 
         // pad bytes if required
         let bytes_used = (writer.bits_written / 8) as u64;
@@ -314,21 +329,20 @@ pub struct Object {
     data: Data,
 }
 
-impl Object {
-    #[allow(unused_variables)]
-    fn writer<W: ::deku::no_std_io::Write + Seek>(
+impl MutWriter for Object {
+    fn to_mutwriter<W: Write + Seek>(
         &mut self,
-        __deku_writer: &mut ::deku::writer::Writer<W>,
+        deku_writer: &mut Writer<W>,
         _: (),
-    ) -> core::result::Result<(), ::deku::DekuError> {
-        DekuWriter::to_writer(&self.header, __deku_writer, ())?;
+    ) -> core::result::Result<(), DekuError> {
+        DekuWriter::to_writer(&self.header, deku_writer, ())?;
 
         if self.name.as_bytes().len() != self.header.namesize.value as usize - 1 {
             panic!("add assert here");
         }
-        DekuWriter::to_writer(&self.name, __deku_writer, ())?;
-        DekuWriter::to_writer(&self.name_pad, __deku_writer, ())?;
-        self.data.writer(__deku_writer, self.header.filesize.value)?;
+        DekuWriter::to_writer(&self.name, deku_writer, ())?;
+        DekuWriter::to_writer(&self.name_pad, deku_writer, ())?;
+        self.data.to_mutwriter(deku_writer, self.header.filesize.value)?;
         Ok(())
     }
 }

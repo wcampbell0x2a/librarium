@@ -10,7 +10,7 @@ alloc = ["deku/alloc"]
 
 [dependencies]
 clap = { version = "4.4.12", features = ["derive"] }
-deku = { git = "https://github.com/sharksforarms/deku", branch = "impl-reader-seek" }
+deku = { version = "0.18.1", features = ["std"], default-features = false }
 thiserror = "1.0.52"
 
 [dev-dependencies]
