@@ -1,0 +1,25 @@
+[package]
+name = "librarium-cli"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Library for the reading, creating, and modification of CPIO file systems"
+rust-version = "1.72.1"
+readme = "../README.md"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[[bin]]
+name = "uncpio-librarium"
+path = "src/bin/uncpio.rs"
+bench = false
+
+[dependencies]
+clap = { version = "4.4.12", features = ["derive"] }
+librarium = { path = "../librarium" }

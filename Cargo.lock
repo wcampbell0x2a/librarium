@@ -152,17 +152,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3fd119d74b830634cea2a0f58bbd0d54540518a14397557951e79340abc28c0"
 
 [[package]]
-name = "cpio-deku"
-version = "0.1.0"
-dependencies = [
- "clap",
- "deku",
- "tempfile",
- "test-assets",
- "thiserror",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -383,6 +372,24 @@ name = "libc"
 version = "0.2.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
+
+[[package]]
+name = "librarium"
+version = "0.2.0"
+dependencies = [
+ "deku",
+ "tempfile",
+ "test-assets",
+ "thiserror",
+]
+
+[[package]]
+name = "librarium-cli"
+version = "0.2.0"
+dependencies = [
+ "clap",
+ "librarium",
+]
 
 [[package]]
 name = "linux-raw-sys"
