@@ -4,7 +4,7 @@ use std::io::{BufReader, Seek};
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
-use cpio_deku::{ArchiveReader, CpioReader};
+use librarium::{ArchiveReader, CpioReader};
 
 use clap::builder::styling::*;
 pub fn styles() -> clap::builder::Styles {

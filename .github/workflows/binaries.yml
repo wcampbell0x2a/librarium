@@ -1,0 +1,78 @@
+on:
+  push:
+    branches: [ master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  BINS: "uncpio-librarium"
+
+name: binaries
+
+jobs:
+  # release binaries
+  release-bins:
+    runs-on: ${{ matrix.job.os }}
+    env:
+      RUSTFLAGS: "-C target-feature=+crt-static"
+      BUILD_CMD: cargo
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { target: x86_64-unknown-linux-musl,    os: ubuntu-latest, use-cross: true }
+          - { target: aarch64-unknown-linux-musl,   os: ubuntu-latest, use-cross: true }
+          - { target: arm-unknown-linux-musleabi,   os: ubuntu-latest, use-cross: true }
+          - { target: armv7-unknown-linux-musleabi, os: ubuntu-latest, use-cross: true }
+          - { target: x86_64-apple-darwin,          os: macos-12                       }
+
+    steps:
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - name: Populate cache
+        uses: ./.github/workflows/cache
+
+      - name: Overwrite build command env variable
+        if: matrix.job.use-cross
+        shell: bash
+        run: |
+          echo "BUILD_CMD=cross" >> $GITHUB_ENV
+          RUSTFLAGS="-C target-feature=-crt-static" cargo install cross --git https://github.com/cross-rs/cross
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          target: ${{ matrix.job.target }}
+
+      - run: $BUILD_CMD build -p librarium-cli --bin uncpio-librarium --locked --target ${{ matrix.job.target }} --profile=dist
+      - name: archive
+        run: |
+          tar -czvf librarium-${{ matrix.job.target }}.tar.gz \
+              -C target/${{ matrix.job.target }}/dist/ $BINS
+
+      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        with:
+          name: librarium-${{ matrix.job.target }}.tar.gz
+          path: librarium-${{ matrix.job.target }}.tar.gz
+
+      # check semvar before release!
+      - name: Check semver
+        env:
+          # disable static build for this job
+          RUSTFLAGS: ""
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        uses: obi1kenobi/cargo-semver-checks-action@c7306483f698c511eaf7416d1bf2e1958c90140f # v2.4
+        with:
+          package: librarium
+          feature-group: default-features
+
+      - name: Upload binary to release
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        uses: svenstaro/upload-release-action@04733e069f2d7f7f0b4aebc4fbdbce8613b03ccd # v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: librarium-${{ matrix.job.target }}.tar.gz
+          asset_name: librarium-${{ github.ref_name }}-${{ matrix.job.target }}.tar.gz
+          tag: ${{ github.ref }}
+          prerelease: true
+          overwrite: true

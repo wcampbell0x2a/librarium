@@ -4,9 +4,9 @@ use std::ffi::CString;
 use std::io::{self, Cursor};
 use std::io::{Read, Seek, SeekFrom, Write};
 
-use ::deku::DekuError;
 use deku::prelude::*;
 use deku::writer::Writer;
+use deku::DekuError;
 use thiserror::Error;
 
 const MAGIC: [u8; 6] = [b'0', b'7', b'0', b'7', b'0', b'1'];

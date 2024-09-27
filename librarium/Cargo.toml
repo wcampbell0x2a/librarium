@@ -1,0 +1,29 @@
+[package]
+name = "librarium"
+description = "Library for the reading, creating, and modification of CPIO file systems"
+rust-version = "1.72.1"
+readme = "../README.md"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = ["std"]
+std = ["deku/std", "alloc"]
+alloc = ["deku/alloc"]
+
+[dependencies]
+deku = { version = "0.18.1", features = ["std"], default-features = false }
+thiserror = "1.0.52"
+
+[dev-dependencies]
+tempfile = "3.9.0"
+test-assets = { git  = "https://github.com/wcampbell0x2a/test-assets", branch = "replace-curl-ureq" }

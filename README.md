@@ -1,7 +1,5 @@
-# cpio-deku
-Library and binaries for the reading, creating, and modification of cpio.
-
-As we rely on an unreleased version of deku, this isn't yet published on crates.io.
+# Librarium
+Library and binaries for the reading, creating, and modification of [CPIO](https://en.wikipedia.org/wiki/Cpio) archives.
 
 ## Usage
 ```

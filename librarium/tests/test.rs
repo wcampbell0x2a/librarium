@@ -3,7 +3,7 @@ use std::io::BufReader;
 use std::io::Read;
 use std::{ffi::CString, io::Cursor};
 
-use cpio_deku::{ArchiveReader, ArchiveWriter, Header};
+use librarium::{ArchiveReader, ArchiveWriter, Header};
 use test_assets::TestAssetDef;
 
 // cpio -o -H newc > cpio-in.cpio
