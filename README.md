@@ -58,6 +58,13 @@ writer.write().unwrap();
 ## Binaries
 *Compiler support: requires rustc 1.77+*
 
+These are currently under development and are missing features, MR's welcome!
+
+To install, run `cargo install librarium-cli --locked`, or download from the
+[latest github release](https://github.com/wcampbell0x2a/librarium/releases/latest).
+
+See ``--help`` for more information.
+
 ### uncpio-librarium
 ```
 tool to extract and list cpio filesystems
