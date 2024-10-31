@@ -1,13 +1,16 @@
 use std::fs::File;
 use std::io::BufReader;
+use std::io::Cursor;
 use std::io::Read;
-use std::{ffi::CString, io::Cursor};
 
-use librarium::{ArchiveReader, ArchiveWriter, Header};
+use librarium::CpioHeader;
+use librarium::NewcHeader;
+use librarium::OdcHeader;
+use librarium::{ArchiveReader, ArchiveWriter};
 use test_assets::TestAssetDef;
 
 // cpio -o -H newc > cpio-in.cpio
-#[test]
+#[test_log::test]
 fn test_simple_in_out_newc_files() {
     const TEST_PATH: &str = "test-assets/test_simple_in_out_newc/";
     let filepath = "cpio-in.cpio";
@@ -26,71 +29,115 @@ fn test_simple_in_out_newc_files() {
     test_assets::download_test_files(&asset_defs, TEST_PATH, true).unwrap();
 
     let mut file = BufReader::new(File::open(&og_path).unwrap());
-    let mut archive = ArchiveReader::from_reader_with_offset(&mut file, 0).unwrap();
+    let mut archive: ArchiveReader<NewcHeader> =
+        ArchiveReader::from_reader_with_offset(&mut file, 0).unwrap();
 
     let a_assert = "a\n".as_bytes();
     let b_assert = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n".as_bytes();
     let c_assert = "cccccccccccccccccccccccccccccc\ncccc\nc\nc\nc\nc\nc\n".as_bytes();
 
     let mut a = Cursor::new(Vec::new());
-    archive.extract_by_name(CString::new("cpio-in/a").unwrap(), &mut a).unwrap();
+    let _header_a = archive.extract_by_name("cpio-in/a", &mut a).unwrap().unwrap();
     assert_eq!(a.into_inner(), a_assert);
 
     let mut b = Cursor::new(Vec::new());
-    archive.extract_by_name(CString::new("cpio-in/b").unwrap(), &mut b).unwrap();
+    let _header_b = archive.extract_by_name("cpio-in/b", &mut b).unwrap().unwrap();
     assert_eq!(b.into_inner(), b_assert);
 
     let mut c = Cursor::new(Vec::new());
-    archive.extract_by_name(CString::new("cpio-in/c").unwrap(), &mut c).unwrap();
+    let _header_c = archive.extract_by_name("cpio-in/c", &mut c).unwrap().unwrap();
     assert_eq!(c.into_inner(), c_assert);
 
     let file = File::create(&new_path).unwrap();
-    let mut writer = ArchiveWriter::new(Box::new(file));
+    let mut writer = ArchiveWriter::<NewcHeader>::new(Box::new(file));
 
-    // A
-    let header_a = Header {
-        ino: 9119860,
-        mode: 33188,
-        uid: 1000,
-        gid: 1000,
-        nlink: 1,
-        mtime: 1703901104,
-        devmajor: 0,
-        devminor: 38,
-        rdevmajor: 0,
-        rdevminor: 0,
-    };
-    writer.push_file(Cursor::new(a_assert), CString::new("cpio-in/a").unwrap(), header_a).unwrap();
+    for objects in &archive.objects.inner {
+        println!("Z: {:02x?}", objects.header.as_header());
+    }
+    // a
+    let header_a = archive.objects.inner[0].header.as_header();
+    writer.push_file(Cursor::new(a_assert), header_a).unwrap();
 
     // b
-    let header_b = Header {
-        ino: 9119861,
-        mode: 33188,
-        uid: 1000,
-        gid: 1000,
-        nlink: 1,
-        mtime: 1703901110,
-        devmajor: 0,
-        devminor: 38,
-        rdevmajor: 0,
-        rdevminor: 0,
-    };
-    writer.push_file(Cursor::new(b_assert), CString::new("cpio-in/b").unwrap(), header_b).unwrap();
+    let header_b = archive.objects.inner[1].header.as_header();
+    writer.push_file(Cursor::new(b_assert), header_b).unwrap();
 
     // c
-    let header_c = Header {
-        ino: 9119863,
-        mode: 33188,
-        uid: 1000,
-        gid: 1000,
-        nlink: 1,
-        mtime: 1703901119,
-        devmajor: 0,
-        devminor: 38,
-        rdevmajor: 0,
-        rdevminor: 0,
-    };
-    writer.push_file(Cursor::new(c_assert), CString::new("cpio-in/c").unwrap(), header_c).unwrap();
+    let header_c = archive.objects.inner[2].header.as_header();
+    writer.push_file(Cursor::new(c_assert), header_c).unwrap();
+
+    writer.write().unwrap();
+
+    let mut og_file = File::open(&og_path).unwrap();
+    let mut new_file = File::open(&new_path).unwrap();
+
+    let mut first = vec![];
+    og_file.read_to_end(&mut first).unwrap();
+    let mut second = vec![];
+    new_file.read_to_end(&mut second).unwrap();
+
+    assert_eq!(first, second);
+}
+
+// cpio -o -H newc > cpio-in.cpio
+#[test_log::test]
+fn test_simple_in_out_odc_files() {
+    const TEST_PATH: &str = "test-assets/test_simple_in_out_odc/";
+    let filepath = "odc.cpio";
+    let og_path = format!("{TEST_PATH}/{filepath}");
+    let new_path = format!("{TEST_PATH}/bytes.squashfs");
+
+    const FILE_NAME: &str = "odc.cpio";
+    let asset_defs = [TestAssetDef {
+        filename: FILE_NAME.to_string(),
+        hash: "4cee2af1ecfec5ba14eabfb5821716782e79961d369a4279546fbff1be6d7bef".to_string(),
+        url: format!("https://wcampbell.dev/cpio/testing/test_simple_in_out_odc_files/{FILE_NAME}"),
+    }];
+
+    test_assets::download_test_files(&asset_defs, TEST_PATH, true).unwrap();
+
+    let mut file = BufReader::new(File::open(&og_path).unwrap());
+    let mut archive: ArchiveReader<OdcHeader> =
+        ArchiveReader::from_reader_with_offset(&mut file, 0).unwrap();
+
+    let a_assert = "a\n".as_bytes();
+    let b_assert = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n".as_bytes();
+    let c_assert = "cccccccccccccccccccccccccccccc\ncccc\nc\nc\nc\nc\nc\n".as_bytes();
+
+    let mut a = Cursor::new(Vec::new());
+    archive.extract_by_name("cpio-in/a", &mut a).unwrap();
+    assert_eq!(a.into_inner(), a_assert);
+
+    let mut b = Cursor::new(Vec::new());
+    archive.extract_by_name("cpio-in/b", &mut b).unwrap();
+    assert_eq!(b.into_inner(), b_assert);
+
+    let mut c = Cursor::new(Vec::new());
+    archive.extract_by_name("cpio-in/c", &mut c).unwrap();
+    assert_eq!(c.into_inner(), c_assert);
+
+    let file = File::create(&new_path).unwrap();
+    let mut writer: ArchiveWriter<OdcHeader> = ArchiveWriter::new(Box::new(file));
+
+    // .
+    let header_dot = archive.objects.inner[0].header.as_header();
+    writer.push_empty(header_dot).unwrap();
+
+    // cpio-in
+    let header_dir = archive.objects.inner[1].header.as_header();
+    writer.push_empty(header_dir).unwrap();
+
+    // a
+    let header_a = archive.objects.inner[2].header.as_header();
+    writer.push_file(Cursor::new(a_assert), header_a).unwrap();
+
+    // b
+    let header_b = archive.objects.inner[3].header.as_header();
+    writer.push_file(Cursor::new(b_assert), header_b).unwrap();
+
+    // c
+    let header_c = archive.objects.inner[4].header.as_header();
+    writer.push_file(Cursor::new(c_assert), header_c).unwrap();
 
     writer.write().unwrap();
 
