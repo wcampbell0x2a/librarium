@@ -1,6 +1,6 @@
 [package]
 name = "librarium"
-description = "Library for the reading, creating, and modification of CPIO file systems"
+description = "Library for the reading, creating, and modification of cpio file systems"
 rust-version = "1.72.1"
 readme = "../README.md"
 version.workspace = true

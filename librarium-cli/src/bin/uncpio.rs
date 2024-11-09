@@ -34,7 +34,7 @@ enum Format {
           styles = styles(),
 )]
 struct Args {
-    /// CPIO path
+    /// cpio path
     archive: PathBuf,
 
     // #[arg(short, long, default_value_t = "newc")]

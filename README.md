@@ -7,7 +7,7 @@ Librarium
 [<img alt="build status" src="https://img.shields.io/github/actions/workflow/status/wcampbell0x2a/librarium/main.yml?branch=master&style=for-the-badge" height="20">](https://github.com/wcampbell0x2a/librarium/actions?query=branch%3Amaster)
 [<img alt="Codecov" src="https://img.shields.io/codecov/c/github/wcampbell0x2a/librarium?style=for-the-badge" height="20">](https://app.codecov.io/gh/wcampbell0x2a/librarium)
 
-Library and binaries for the reading, creating, and modification of [CPIO](https://en.wikipedia.org/wiki/Cpio) archives.
+Library and binaries for the reading, creating, and modification of [cpio](https://en.wikipedia.org/wiki/Cpio) archives.
 
 ## Library
 *Compiler support: requires rustc 1.72.1+*
@@ -73,7 +73,7 @@ tool to extract and list cpio filesystems
 Usage: uncpio-librarium [OPTIONS] <ARCHIVE> <FORMAT>
 
 Arguments:
-  <ARCHIVE>  CPIO path
+  <ARCHIVE>  cpio path
   <FORMAT>   [possible values: odc, newc]
 
 Options:

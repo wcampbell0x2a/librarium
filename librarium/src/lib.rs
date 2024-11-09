@@ -1,5 +1,5 @@
 /*!
-Reader and Writer library for CPIO archives
+Reader and Writer library for cpio archives
 
 ### Read
 ```rust, no_run
@@ -56,7 +56,7 @@ use thiserror::Error;
 const NEWC_MAGIC: [u8; 6] = [b'0', b'7', b'0', b'7', b'0', b'1'];
 const TRAILER: &str = "TRAILER!!!";
 
-/// Common information between types of CPIO headers
+/// Common information between types of cpio headers
 pub trait CpioHeader: for<'a> DekuReader<'a> + DekuWriter {
     fn as_header(&self) -> Header;
     fn from_header(header: Header, filesize: u64) -> Self;
@@ -139,7 +139,7 @@ impl<R: ReadSeek> Seek for ReaderWithOffset<R> {
 }
 
 impl<T: ReadSeek> CpioReader for T {}
-/// Extract data from CPIO Archive
+/// Extract data from cpio Archive
 pub trait CpioReader: ReadSeek {
     fn extract_data<W, C: CpioHeader>(
         &mut self,
@@ -244,7 +244,7 @@ impl<C: CpioHeader> Objects<C> {
     }
 }
 
-/// Read CPIO Archive and extract data
+/// Read cpio Archive and extract data
 ///
 /// # Example
 /// Read `archive.cpio` and extract data.
@@ -313,10 +313,10 @@ impl<'b, C: CpioHeader> ArchiveReader<'b, C> {
 pub trait WriteSeek: std::io::Write + Seek {}
 impl<T: Write + Seek> WriteSeek for T {}
 
-/// Write CPIO Archive and add data
+/// Write cpio Archive and add data
 ///
 /// # Example
-/// Create new CPIO archive of Newc format and one file.
+/// Create new cpio archive of Newc format and one file.
 ///
 /// ```rust, no_run
 /// # use std::ffi::CString;
@@ -421,7 +421,7 @@ impl<'a, C: CpioHeader + Debug> ArchiveWriter<'a, C> {
     }
 }
 
-/// Common representation of CPIO Header
+/// Common representation of cpio Header
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct Header {
     pub ino: u32,
@@ -439,7 +439,7 @@ pub struct Header {
     pub name: String,
 }
 
-/// Object in CPIO archive
+/// Object in cpio archive
 #[derive(DekuRead)]
 pub struct Object<C: CpioHeader> {
     pub header: C,
@@ -606,7 +606,7 @@ impl CpioHeader for OdcHeader {
     }
 }
 
-/// Improved CPIO Header, also known as "SVR4" or "New ASCII"
+/// Improved cpio Header, also known as "SVR4" or "New ASCII"
 #[derive(DekuWrite, DekuRead, Debug)]
 pub struct NewcHeader {
     #[deku(assert_eq = "NEWC_MAGIC")]
