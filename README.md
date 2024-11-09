@@ -7,7 +7,7 @@ Librarium
 [<img alt="build status" src="https://img.shields.io/github/actions/workflow/status/wcampbell0x2a/librarium/main.yml?branch=master&style=for-the-badge" height="20">](https://github.com/wcampbell0x2a/librarium/actions?query=branch%3Amaster)
 [<img alt="Codecov" src="https://img.shields.io/codecov/c/github/wcampbell0x2a/librarium?style=for-the-badge" height="20">](https://app.codecov.io/gh/wcampbell0x2a/librarium)
 
-Library and binaries for the reading, creating, and modification of [CPIO](https://en.wikipedia.org/wiki/Cpio) archives.
+Library and binaries for the reading, creating, and modification of [cpio](https://en.wikipedia.org/wiki/Cpio) archives.
 
 ## Library
 *Compiler support: requires rustc 1.72.1+*
@@ -20,36 +20,37 @@ librarium = "0.2.0"
 
 ### Read
 ```rust
+use std::ffi::CString;
+use std::io::Cursor;
+use std::fs::{File, OpenOptions};
+use librarium::{Header, ArchiveReader, NewcHeader, CpioReader, CpioHeader};
 let mut file = File::open("archive.cpio").unwrap();
-let mut archive = ArchiveReader::from_reader(&mut file).unwrap();
+let mut archive = ArchiveReader::<NewcHeader>::from_reader_with_offset(&mut file, 0).unwrap();
 
 // extract bytes from all in archive
 for object in &archive.objects.inner {
-    let mut out = OpenOptions::new().write(true).create(true).open(object.name).unwrap();
+    let mut out = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(object.header.as_header().name)
+        .unwrap();
     archive.reader.extract_data(object, &mut out).unwrap();
 }
 ```
 
 ### Write
 ```rust
-let file = File::create(&new_path).unwrap();
-let mut writer = ArchiveWriter::new(Box::new(file));
+use std::ffi::CString;
+use std::io::Cursor;
+use std::fs::File;
+use librarium::{Header, ArchiveWriter, NewcHeader};
+let file = File::create("archive.cpio").unwrap();
+let mut writer = ArchiveWriter::<NewcHeader>::new(Box::new(file));
 
 // A
 let a_data = "a\n".as_bytes();
-let a_header = Header {
-    ino: 9119860,
-    mode: 33188,
-    uid: 1000,
-    gid: 1000,
-    nlink: 1,
-    mtime: 1703901104,
-    devmajor: 0,
-    devminor: 38,
-    rdevmajor: 0,
-    rdevminor: 0,
-};
-writer.push_file(Cursor::new(a_data), CString::new("cpio-in/a").unwrap(), a_header).unwrap();
+let a_header = Header { name: "a".to_string(), ..Header::default()};
+writer.push_file(Cursor::new(a_data), a_header).unwrap();
 
 // write to archive
 writer.write().unwrap();
@@ -66,13 +67,14 @@ To install, run `cargo install librarium-cli --locked`, or download from the
 See ``--help`` for more information.
 
 ### uncpio-librarium
-```
+```text
 tool to extract and list cpio filesystems
 
-Usage: uncpio [OPTIONS] [ARCHIVE]
+Usage: uncpio-librarium [OPTIONS] <ARCHIVE> <FORMAT>
 
 Arguments:
-  [ARCHIVE]  CPIO path
+  <ARCHIVE>  cpio path
+  <FORMAT>   [possible values: odc, newc]
 
 Options:
   -o, --offset <BYTES>   Skip BYTES at the start of FILESYSTEM [default: 0]

@@ -7,7 +7,7 @@ edition.workspace = true
 repository.workspace = true
 keywords.workspace = true
 categories.workspace = true
-description = "Library for the reading, creating, and modification of CPIO file systems"
+description = "Library for the reading, creating, and modification of cpio file systems"
 rust-version = "1.72.1"
 readme = "../README.md"
 
@@ -22,4 +22,6 @@ bench = false
 
 [dependencies]
 clap = { version = "4.4.12", features = ["derive"] }
+env_logger = "0.11.5"
 librarium = { path = "../librarium", version = "0.2.0" }
+log = "0.4.22"

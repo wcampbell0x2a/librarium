@@ -3,8 +3,9 @@ use std::io::SeekFrom;
 use std::io::{BufReader, Seek};
 use std::path::{Path, PathBuf};
 
-use clap::Parser;
-use librarium::{ArchiveReader, CpioReader};
+use clap::{Parser, ValueEnum};
+use librarium::{ArchiveReader, CpioHeader, CpioReader, NewcHeader, OdcHeader};
+use log::{error, info};
 
 use clap::builder::styling::*;
 pub fn styles() -> clap::builder::Styles {
@@ -18,6 +19,12 @@ pub fn styles() -> clap::builder::Styles {
         .invalid(AnsiColor::Yellow.on_default() | Effects::BOLD)
 }
 
+#[derive(Copy, Clone, ValueEnum)]
+enum Format {
+    Odc,
+    Newc,
+}
+
 /// tool to extract and list cpio filesystems
 #[derive(Parser)]
 #[command(author,
@@ -27,8 +34,11 @@ pub fn styles() -> clap::builder::Styles {
           styles = styles(),
 )]
 struct Args {
-    /// CPIO path
-    archive: Option<PathBuf>,
+    /// cpio path
+    archive: PathBuf,
+
+    // #[arg(short, long, default_value_t = "newc")]
+    format: Format,
 
     /// Skip BYTES at the start of FILESYSTEM
     #[arg(short, long, default_value_t = 0, name = "BYTES")]
@@ -40,23 +50,65 @@ struct Args {
 }
 
 fn main() {
+    env_logger::init();
     let args = Args::parse();
 
-    let mut file = BufReader::new(File::open(args.archive.as_ref().unwrap()).unwrap());
+    let mut file = BufReader::new(File::open(args.archive).unwrap());
     file.seek(SeekFrom::Start(args.offset)).unwrap();
 
     // Extract all
-    let mut archive = ArchiveReader::from_reader_with_offset(&mut file, args.offset).unwrap();
-    for object in &archive.objects.inner {
-        let filepath = Path::new(&args.dest).join(object.name.clone().into_string().unwrap());
+    match args.format {
+        Format::Odc => {
+            let mut archive: ArchiveReader<OdcHeader> =
+                match ArchiveReader::from_reader_with_offset(&mut file, args.offset) {
+                    Ok(a) => a,
+                    Err(e) => {
+                        error!("could not read archive: {e}");
+                        return;
+                    }
+                };
+            let len = archive.objects.inner.len();
+            for object in &archive.objects.inner[..len - 1] {
+                let filepath = Path::new(&args.dest).join(object.header.name());
 
-        println!("extracting: {:?} -> {:02x?}", object.name, filepath);
-        println!("{:?}", object.header);
-        if object.header.filesize.value != 0 {
-            let _ = fs::create_dir_all(filepath.parent().unwrap());
-            let mut out =
-                OpenOptions::new().write(true).create(true).truncate(true).open(filepath).unwrap();
-            archive.reader.extract_data(object, &mut out).unwrap();
+                info!("extracting: {:?} -> {:02x?}", object.header.name(), filepath);
+                if object.header.filesize() != 0 {
+                    let _ = fs::create_dir_all(filepath.parent().unwrap());
+                    let mut out = OpenOptions::new()
+                        .write(true)
+                        .create(true)
+                        .truncate(true)
+                        .open(filepath)
+                        .unwrap();
+                    archive.reader.extract_data(object, &mut out).unwrap();
+                }
+            }
+        }
+        Format::Newc => {
+            let mut archive: ArchiveReader<NewcHeader> =
+                match ArchiveReader::from_reader_with_offset(&mut file, args.offset) {
+                    Ok(a) => a,
+                    Err(e) => {
+                        error!("could not read archive: {e}");
+                        return;
+                    }
+                };
+            let len = archive.objects.inner.len();
+            for object in &archive.objects.inner[..len - 1] {
+                let filepath = Path::new(&args.dest).join(object.header.name());
+
+                info!("extracting: {:?} -> {:02x?}", object.header.name(), filepath);
+                if object.header.filesize() != 0 {
+                    let _ = fs::create_dir_all(filepath.parent().unwrap());
+                    let mut out = OpenOptions::new()
+                        .write(true)
+                        .create(true)
+                        .truncate(true)
+                        .open(filepath)
+                        .unwrap();
+                    archive.reader.extract_data(object, &mut out).unwrap();
+                }
+            }
         }
     }
 }
