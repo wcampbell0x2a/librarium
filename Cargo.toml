@@ -6,11 +6,11 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 authors = ["wcampbell <wcampbell1995@gmail.com>"]
 license = "MIT OR Apache-2.0"
-keywords = ["filesystem", "deku", "squashfs", "linux"]
+keywords = ["filesystem", "deku", "cpio", "linux", "archive"]
 categories = ["filesystem", "parsing"]
 repository = "https://github.com/wcampbell0x2a/librarium"
 

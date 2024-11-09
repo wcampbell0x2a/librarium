@@ -509,7 +509,7 @@ checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
 
 [[package]]
 name = "librarium"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "deku",
  "log",
@@ -523,7 +523,7 @@ dependencies = [
 
 [[package]]
 name = "librarium-cli"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "clap",
  "env_logger",
