@@ -2,12 +2,14 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::Cursor;
 use std::io::Read;
+use std::time::Duration;
 
 use librarium::CpioHeader;
 use librarium::NewcHeader;
 use librarium::OdcHeader;
 use librarium::{ArchiveReader, ArchiveWriter};
-use test_assets::TestAssetDef;
+use test_assets_ureq::dl_test_files_backoff;
+use test_assets_ureq::TestAssetDef;
 
 // cpio -o -H newc > cpio-in.cpio
 #[test_log::test]
@@ -26,7 +28,7 @@ fn test_simple_in_out_newc_files() {
         ),
     }];
 
-    test_assets::download_test_files(&asset_defs, TEST_PATH, true).unwrap();
+    dl_test_files_backoff(&asset_defs, TEST_PATH, true, Duration::from_secs(1)).unwrap();
 
     let mut file = BufReader::new(File::open(&og_path).unwrap());
     let mut archive: ArchiveReader<NewcHeader> =
@@ -94,7 +96,7 @@ fn test_simple_in_out_odc_files() {
         url: format!("https://wcampbell.dev/cpio/testing/test_simple_in_out_odc_files/{FILE_NAME}"),
     }];
 
-    test_assets::download_test_files(&asset_defs, TEST_PATH, true).unwrap();
+    dl_test_files_backoff(&asset_defs, TEST_PATH, true, Duration::from_secs(1)).unwrap();
 
     let mut file = BufReader::new(File::open(&og_path).unwrap());
     let mut archive: ArchiveReader<OdcHeader> =
