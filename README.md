@@ -24,6 +24,7 @@ use std::ffi::CString;
 use std::io::Cursor;
 use std::fs::{File, OpenOptions};
 use librarium::{Header, ArchiveReader, NewcHeader, CpioReader, CpioHeader};
+
 let mut file = File::open("archive.cpio").unwrap();
 let mut archive = ArchiveReader::<NewcHeader>::from_reader_with_offset(&mut file, 0).unwrap();
 
@@ -44,6 +45,7 @@ use std::ffi::CString;
 use std::io::Cursor;
 use std::fs::File;
 use librarium::{Header, ArchiveWriter, NewcHeader};
+
 let file = File::create("archive.cpio").unwrap();
 let mut writer = ArchiveWriter::<NewcHeader>::new(Box::new(file));
 
