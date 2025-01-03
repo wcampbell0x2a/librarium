@@ -28,6 +28,6 @@ num-traits = "0.2.19"
 thiserror = "1.0.52"
 
 [dev-dependencies]
-tempfile = "3.9.0"
+tempfile = "3.15.0"
 test-assets-ureq = "0.3.0"
 test-log = "0.2.16"
