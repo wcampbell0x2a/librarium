@@ -21,7 +21,7 @@ path = "src/bin/uncpio.rs"
 bench = false
 
 [dependencies]
-clap = { version = "4.4.12", features = ["derive"] }
+clap = { version = "4.5.24", features = ["derive"] }
 env_logger = "0.11.5"
 librarium = { path = "../librarium", version = "0.3.1" }
 log = "0.4.22"
