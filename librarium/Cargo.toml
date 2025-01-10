@@ -25,7 +25,7 @@ deku = { version = "0.18.1", features = ["std", "logging"], default-features = f
 log = "0.4.22"
 num = "0.4.3"
 num-traits = "0.2.19"
-thiserror = "1.0.52"
+thiserror = "2.0.10"
 
 [dev-dependencies]
 tempfile = "3.9.0"
