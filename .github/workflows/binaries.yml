@@ -50,7 +50,7 @@ jobs:
           tar -czvf librarium-${{ matrix.job.target }}.tar.gz \
               -C target/${{ matrix.job.target }}/dist/ $BINS
 
-      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: librarium-${{ matrix.job.target }}.tar.gz
           path: librarium-${{ matrix.job.target }}.tar.gz
