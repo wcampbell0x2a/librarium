@@ -10,7 +10,7 @@ on:
 name: Check MSRV of librarium
 jobs:
   build-test-cpio:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
@@ -29,7 +29,7 @@ jobs:
       - run: cargo check --locked -p librarium
 
   build-test-librarium-cli:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
