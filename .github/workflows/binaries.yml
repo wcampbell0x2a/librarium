@@ -28,7 +28,7 @@ jobs:
           - { target: x86_64-apple-darwin,          os: macos-14                       }
 
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Populate cache
         uses: ./.github/workflows/cache
 
@@ -50,7 +50,7 @@ jobs:
           tar -czvf librarium-${{ matrix.job.target }}.tar.gz \
               -C target/${{ matrix.job.target }}/dist/ $BINS
 
-      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+      - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: librarium-${{ matrix.job.target }}.tar.gz
           path: librarium-${{ matrix.job.target }}.tar.gz
