@@ -29,5 +29,5 @@ thiserror = "2.0.0"
 
 [dev-dependencies]
 tempfile = "3.9.0"
-test-assets-ureq = "0.3.0"
+test-assets-ureq = "0.5.0"
 test-log = "0.2.16"
