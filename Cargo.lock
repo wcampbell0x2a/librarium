@@ -272,9 +272,9 @@ dependencies = [
 
 [[package]]
 name = "deku"
-version = "0.18.1"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9711031e209dc1306d66985363b4397d4c7b911597580340b93c9729b55f6eb"
+checksum = "0884cacbbfed7294f52619ec9092550a78728ef7bef9ae644dd00750763a4022"
 dependencies = [
  "bitvec",
  "deku_derive",
@@ -285,9 +285,9 @@ dependencies = [
 
 [[package]]
 name = "deku_derive"
-version = "0.18.1"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58cb0719583cbe4e81fb40434ace2f0d22ccc3e39a74bb3796c22b451b4f139d"
+checksum = "1752be5b3a3f7053230fe4e6c023b3f9fdbbe91bc0d87dc4ae92ffdfaa2afc90"
 dependencies = [
  "darling",
  "proc-macro-crate",
@@ -509,7 +509,7 @@ checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
 
 [[package]]
 name = "librarium"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "deku",
  "log",
@@ -523,7 +523,7 @@ dependencies = [
 
 [[package]]
 name = "librarium-cli"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "clap",
  "env_logger",
@@ -569,9 +569,9 @@ dependencies = [
 
 [[package]]
 name = "no_std_io2"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f038b95e66372ec5f4adabd615fc9a46a1fe42bcfe549863921c0e44667b605"
+checksum = "3c2b9acd47481ab557a89a5665891be79e43cce8a29ad77aa9419d7be5a7c06a"
 dependencies = [
  "memchr",
 ]
