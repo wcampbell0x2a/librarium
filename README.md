@@ -10,7 +10,7 @@ Librarium
 Library and binaries for the reading, creating, and modification of [cpio](https://en.wikipedia.org/wiki/Cpio) archives.
 
 ## Library
-*Compiler support: requires rustc 1.84+*
+*Compiler support: requires rustc 1.85+*
 
 Add the following to your `Cargo.toml` file:
 ```toml
@@ -59,7 +59,7 @@ writer.write().unwrap();
 ```
 
 ## Binaries
-*Compiler support: requires rustc 1.84+*
+*Compiler support: requires rustc 1.85+*
 
 These are currently under development and are missing features, MR's welcome!
 

@@ -8,8 +8,8 @@ use librarium::CpioHeader;
 use librarium::NewcHeader;
 use librarium::OdcHeader;
 use librarium::{ArchiveReader, ArchiveWriter};
-use test_assets_ureq::dl_test_files_backoff;
 use test_assets_ureq::TestAssetDef;
+use test_assets_ureq::dl_test_files_backoff;
 
 // cpio -o -H newc > cpio-in.cpio
 #[test_log::test]
