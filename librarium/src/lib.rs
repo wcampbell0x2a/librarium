@@ -47,9 +47,9 @@ type _ReadmeTest = ();
 use std::fmt::Debug;
 use std::io::{self, Cursor, Read, Seek, SeekFrom, Write};
 
+use deku::DekuError;
 use deku::prelude::*;
 use deku::writer::Writer;
-use deku::DekuError;
 use thiserror::Error;
 
 const TRAILER: &str = "TRAILER!!!";
