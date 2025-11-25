@@ -45,47 +45,28 @@ writer.write().unwrap();
 type _ReadmeTest = ();
 
 use std::fmt::Debug;
-use std::io::{self, Cursor, Read, Seek, SeekFrom, Write};
+use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 
 use deku::DekuError;
 use deku::prelude::*;
 use deku::writer::Writer;
-use thiserror::Error;
 
 const TRAILER: &str = "TRAILER!!!";
+
+pub mod cpio_header;
+pub use cpio_header::CpioHeader;
+
+pub mod error;
+pub use error::CpioError;
+
+pub mod read_seek;
+pub use read_seek::ReadSeek;
+pub(crate) use read_seek::ReaderWithOffset;
 
 pub mod newc;
 pub use newc::NewcHeader;
 pub mod odc;
 pub use odc::OdcHeader;
-
-/// Common information between types of cpio headers
-pub trait CpioHeader: for<'a> DekuReader<'a> + DekuWriter {
-    fn as_header(&self) -> Header;
-    fn from_header(header: Header, filesize: u64) -> Self;
-    fn ino(&self) -> u32;
-    fn mode(&self) -> u32;
-    fn uid(&self) -> u32;
-    fn gid(&self) -> u32;
-    fn nlink(&self) -> u32;
-    fn mtime(&self) -> u32;
-    fn filesize(&self) -> u32;
-    /// Device number of device creating file
-    fn dev(&self) -> Option<u32>;
-    /// Device major number of device creating file
-    fn devmajor(&self) -> Option<u32>;
-    /// Device minor number of device creating file
-    fn devminor(&self) -> Option<u32>;
-
-    fn rdev(&self) -> Option<u32>;
-    fn rdevmajor(&self) -> Option<u32>;
-    fn rdevminor(&self) -> Option<u32>;
-
-    fn namesize(&self) -> u32;
-    fn check(&self) -> Option<u32>;
-    fn name(&self) -> &str;
-    fn data_pad(&self) -> usize;
-}
 
 /// DekuWriter, but can write to self
 trait MutWriter<Ctx = ()> {
@@ -94,51 +75,6 @@ trait MutWriter<Ctx = ()> {
         deku_writer: &mut Writer<W>,
         ctx: Ctx,
     ) -> core::result::Result<(), DekuError>;
-}
-
-/// Errors generated from library
-#[derive(Error, Debug)]
-pub enum CpioError {
-    #[error("std io error: {0}")]
-    StdIo(#[from] io::Error),
-
-    #[error("deku error: {0:?}")]
-    Deku(#[from] deku::DekuError),
-}
-
-/// `Read` + `Seek`
-pub trait ReadSeek: Read + Seek {}
-impl<T: Read + Seek> ReadSeek for T {}
-
-/// Private struct containing logic to read the data section from the archive
-#[derive(Debug)]
-pub(crate) struct ReaderWithOffset<R: ReadSeek> {
-    io: R,
-    /// Offset from start of file to data
-    offset: u64,
-}
-
-impl<R: ReadSeek> ReaderWithOffset<R> {
-    pub fn new(mut io: R, offset: u64) -> std::io::Result<Self> {
-        io.seek(SeekFrom::Start(offset))?;
-        Ok(Self { io, offset })
-    }
-}
-
-impl<R: ReadSeek> Read for ReaderWithOffset<R> {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        self.io.read(buf)
-    }
-}
-
-impl<R: ReadSeek> Seek for ReaderWithOffset<R> {
-    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
-        let seek = match pos {
-            SeekFrom::Start(start) => SeekFrom::Start(self.offset + start),
-            seek => seek,
-        };
-        self.io.seek(seek).map(|x| x - self.offset)
-    }
 }
 
 impl<T: ReadSeek> CpioReader for T {}
