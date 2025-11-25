@@ -19,7 +19,7 @@ librarium = "0.4.0"
 ```
 
 ### Read
-```rust
+```rust,no_run
 use std::ffi::CString;
 use std::io::Cursor;
 use std::fs::{File, OpenOptions};
@@ -40,7 +40,7 @@ for object in &archive.objects.inner {
 ```
 
 ### Write
-```rust
+```rust,no_run
 use std::ffi::CString;
 use std::io::Cursor;
 use std::fs::File;
