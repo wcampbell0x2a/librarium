@@ -21,7 +21,7 @@ std = ["deku/std", "alloc"]
 alloc = ["deku/alloc"]
 
 [dependencies]
-deku = { version = "0.19.0", features = ["std", "logging"], default-features = false }
+deku = { version = "0.20.1", default-features = false, features = ["std", "bits", "descriptive-errors"] }
 log = "0.4.22"
 num = "0.4.3"
 num-traits = "0.2.19"
