@@ -134,13 +134,13 @@ impl CpioHeader for OdcHeader {
     }
 }
 
-#[derive(DekuWrite, DekuRead, Debug, Copy, Clone, Default)]
-struct Octal<T: OctalConversion + fmt::Debug, const N: usize> {
+#[derive(DekuWrite, DekuRead, DekuSize, Debug, Copy, Clone, Default)]
+struct Octal<T: OctalConversion + fmt::Debug + DekuSize, const N: usize> {
     #[deku(reader = "Self::read(deku::reader)", writer = "self.write(deku::writer)")]
     pub value: T,
 }
 
-impl<T: OctalConversion + fmt::Debug, const N: usize> Octal<T, N> {
+impl<T: OctalConversion + fmt::Debug + DekuSize, const N: usize> Octal<T, N> {
     pub fn new(value: T) -> Self {
         Self { value }
     }

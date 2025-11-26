@@ -4,6 +4,8 @@ use std::ffi::CStr;
 use std::io::{Read, Seek, Write};
 
 const NEWC_MAGIC: [u8; 6] = [b'0', b'7', b'0', b'7', b'0', b'1'];
+// Size of magic field in bytes, derived from DekuSize
+const MAGIC_SIZE_BYTES: usize = <[u8; 6]>::SIZE_BYTES.unwrap();
 
 /// Improved cpio Header, also known as "SVR4" or "New ASCII"
 #[derive(DekuWrite, DekuRead, Debug)]
@@ -25,7 +27,7 @@ pub struct NewcHeader {
     check: Ascii,
     #[deku(count = "namesize.value")]
     name: Vec<u8>,
-    #[deku(count = "pad_to_4(6 + namesize.value as usize)")]
+    #[deku(count = "pad_to_4(MAGIC_SIZE_BYTES + namesize.value as usize)")]
     name_pad: Vec<u8>,
 }
 
@@ -49,7 +51,7 @@ impl CpioHeader for NewcHeader {
             namesize: Ascii::new(name_len as u32 + 1),
             check: Ascii::new(0),
             name: name_bytes.to_vec(),
-            name_pad: vec![0; pad_to_4(6 + name_len)],
+            name_pad: vec![0; pad_to_4(MAGIC_SIZE_BYTES + name_len)],
         }
     }
 
@@ -148,7 +150,7 @@ fn pad_to_4(len: usize) -> usize {
     }
 }
 
-#[derive(DekuWrite, DekuRead, Debug, Copy, Clone, Default)]
+#[derive(DekuWrite, DekuRead, DekuSize, Debug, Copy, Clone, Default)]
 struct Ascii {
     #[deku(reader = "Self::read(deku::reader)", writer = "self.write(deku::writer)")]
     pub value: u32,
