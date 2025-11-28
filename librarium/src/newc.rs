@@ -1,7 +1,12 @@
 use crate::{CpioHeader, Header};
+use core::ffi::CStr;
 use deku::prelude::*;
-use std::ffi::CStr;
-use std::io::{Read, Seek, Write};
+use no_std_io2::io::{Read, Seek, Write};
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "alloc")]
+use alloc::{string::ToString, vec, vec::Vec};
 
 const NEWC_MAGIC: [u8; 6] = [b'0', b'7', b'0', b'7', b'0', b'1'];
 // Size of magic field in bytes, derived from DekuSize

@@ -29,6 +29,7 @@ jobs:
       - run: cargo quickinstall cross@0.2.5
       - run: cross build --locked --workspace --target ${{ matrix.targets }}
       - run: cross test --locked --workspace --target ${{ matrix.targets }}
+      - run: cross test --locked --workspace --target ${{ matrix.targets }} --no-default-features
 
   # fmt and clippy on nightly builds
   fmt-clippy-nightly:

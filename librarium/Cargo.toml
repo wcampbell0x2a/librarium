@@ -17,12 +17,13 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["std"]
-std = ["deku/std", "alloc"]
-alloc = ["deku/alloc"]
+std = ["deku/std", "no_std_io2/std", "alloc"]
+alloc = ["deku/alloc", "no_std_io2/alloc"]
 
 [dependencies]
-deku = { version = "0.20.2", default-features = false, features = ["std", "bits", "descriptive-errors"] }
+deku = { version = "0.20.2", default-features = false }
 log = "0.4.22"
+no_std_io2 = "0.9.1"
 num = "0.4.3"
 num-traits = "0.2.19"
 thiserror = "2.0.0"
