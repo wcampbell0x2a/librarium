@@ -38,7 +38,11 @@ writer.push_file(Cursor::new(a_data), a_header).unwrap();
 // write to archive
 writer.write().unwrap();
 ```
+
+# Features
 */
+#![cfg_attr(feature = "document-features", doc = document_features::document_features!())]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
 #[cfg(feature = "alloc")]

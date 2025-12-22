@@ -17,7 +17,9 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["std"]
+## Enable `std` support
 std = ["deku/std", "no_std_io2/std", "alloc"]
+## Enable `alloc` support
 alloc = ["deku/alloc", "no_std_io2/alloc"]
 
 [dependencies]
@@ -27,6 +29,7 @@ no_std_io2 = { version = "0.9.1", default-features = false }
 num = { version = "0.4.3", default-features = false }
 num-traits = { version = "0.2.19", default-features = false }
 thiserror = { version = "2.0.0", default-features = false }
+document-features = { version = "0.2.10", optional = true }
 
 [dev-dependencies]
 tempfile = "3.9.0"
