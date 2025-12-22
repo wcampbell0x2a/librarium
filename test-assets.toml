@@ -1,0 +1,9 @@
+[test_assets.newc]
+filepath = "test-assets/test_simple_in_out_newc/cpio-in.cpio"
+hash = "39c7a5817e62fa451fb57638137bcfdd6add7fe706394d42c60c5c9314dc6cf2"
+url = "https://wcampbell.dev/cpio/testing/test_simple_in_out_newc_files/cpio-in.cpio"
+
+[test_assets.odc]
+filepath = "test-assets/test_simple_in_out_odc/odc.cpio"
+hash = "4cee2af1ecfec5ba14eabfb5821716782e79961d369a4279546fbff1be6d7bef"
+url = "https://wcampbell.dev/cpio/testing/test_simple_in_out_odc_files/odc.cpio"
