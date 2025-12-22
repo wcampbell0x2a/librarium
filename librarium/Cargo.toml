@@ -17,17 +17,22 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["std"]
-std = ["deku/std", "alloc"]
-alloc = ["deku/alloc"]
+## Enable `std` support
+std = ["deku/std", "no_std_io2/std", "alloc"]
+## Enable `alloc` support
+alloc = ["deku/alloc", "no_std_io2/alloc"]
 
 [dependencies]
-deku = { version = "0.19.0", features = ["std", "logging"], default-features = false }
+deku = { version = "0.20.2", default-features = false }
 log = "0.4.22"
-num = "0.4.3"
-num-traits = "0.2.19"
-thiserror = "2.0.0"
+no_std_io2 = { version = "0.9.1", default-features = false }
+num = { version = "0.4.3", default-features = false }
+num-traits = { version = "0.2.19", default-features = false }
+thiserror = { version = "2.0.0", default-features = false }
+document-features = { version = "0.2.10", optional = true }
 
 [dev-dependencies]
 tempfile = "3.9.0"
-test-assets-ureq = "0.3.0"
+test-assets-ureq = "0.6.0"
 test-log = "0.2.16"
+toml = "0.8"

@@ -1,4 +1,4 @@
-use std::io::{Read, Seek, SeekFrom};
+use no_std_io2::io::{Read, Seek, SeekFrom};
 
 /// `Read` + `Seek`
 pub trait ReadSeek: Read + Seek {}
@@ -13,20 +13,20 @@ pub(crate) struct ReaderWithOffset<R: ReadSeek> {
 }
 
 impl<R: ReadSeek> ReaderWithOffset<R> {
-    pub fn new(mut io: R, offset: u64) -> std::io::Result<Self> {
+    pub fn new(mut io: R, offset: u64) -> Result<Self, no_std_io2::io::Error> {
         io.seek(SeekFrom::Start(offset))?;
         Ok(Self { io, offset })
     }
 }
 
 impl<R: ReadSeek> Read for ReaderWithOffset<R> {
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize, no_std_io2::io::Error> {
         self.io.read(buf)
     }
 }
 
 impl<R: ReadSeek> Seek for ReaderWithOffset<R> {
-    fn seek(&mut self, pos: SeekFrom) -> std::io::Result<u64> {
+    fn seek(&mut self, pos: SeekFrom) -> Result<u64, no_std_io2::io::Error> {
         let seek = match pos {
             SeekFrom::Start(start) => SeekFrom::Start(self.offset + start),
             seek => seek,

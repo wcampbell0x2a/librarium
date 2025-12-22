@@ -25,10 +25,38 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           target: ${{ matrix.targets }}
-      - run: cargo install cargo-quickinstall
-      - run: cargo quickinstall cross@0.2.5
+
+      - name: Install cross
+        shell: bash
+        run: |
+          RUSTFLAGS="-C target-feature=-crt-static" cargo install cross --git https://github.com/cross-rs/cross
+
       - run: cross build --locked --workspace --target ${{ matrix.targets }}
       - run: cross test --locked --workspace --target ${{ matrix.targets }}
+      - run: cross test --locked --workspace --target ${{ matrix.targets }} --no-default-features
+
+  # Validate no_std compatibility on embedded targets
+  ensure-no-std:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        target:
+          - thumbv7em-none-eabihf  # ARM Cortex-M4/M7 with FPU
+          - thumbv6m-none-eabi      # ARM Cortex-M0/M0+ (most constrained)
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly  # Required for embedded targets
+          targets: ${{ matrix.target }}
+
+      # Build with default features
+      - name: Build with alloc
+        run: |
+          cd ensure_no_std
+          cargo +nightly build --release --target ${{ matrix.target }}
 
   # fmt and clippy on nightly builds
   fmt-clippy-nightly:

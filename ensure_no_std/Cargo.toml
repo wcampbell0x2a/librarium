@@ -1,0 +1,27 @@
+[package]
+name = "ensure_no_std"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[[bin]]
+name = "ensure_no_std"
+
+[lib]
+name = "no_std_lib"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+lto = true
+
+[dependencies]
+librarium = { path = "../librarium", default-features = false, features = ["alloc"] }
+deku = { version = "0.20.2", default-features = false }
+cortex-m-rt = "0.7.5"
+embedded-alloc = "0.6.0"
+no_std_io2 = "0.9.1"

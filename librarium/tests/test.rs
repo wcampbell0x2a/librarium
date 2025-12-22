@@ -8,27 +8,23 @@ use librarium::CpioHeader;
 use librarium::NewcHeader;
 use librarium::OdcHeader;
 use librarium::{ArchiveReader, ArchiveWriter};
-use test_assets_ureq::TestAssetDef;
-use test_assets_ureq::dl_test_files_backoff;
+use test_assets_ureq::{TestAsset, dl_test_files_backoff};
 
 // cpio -o -H newc > cpio-in.cpio
 #[test_log::test]
 fn test_simple_in_out_newc_files() {
-    const TEST_PATH: &str = "test-assets/test_simple_in_out_newc/";
-    let filepath = "cpio-in.cpio";
+    const TEST_PATH: &str = ".";
+    let filepath = "test-assets/test_simple_in_out_newc/cpio-in.cpio";
     let og_path = format!("{TEST_PATH}/{filepath}");
-    let new_path = format!("{TEST_PATH}/bytes.squashfs");
+    let new_path = format!("{TEST_PATH}/test-assets/test_simple_in_out_newc/bytes.squashfs");
 
-    const FILE_NAME: &str = "cpio-in.cpio";
-    let asset_defs = [TestAssetDef {
-        filename: FILE_NAME.to_string(),
-        hash: "39c7a5817e62fa451fb57638137bcfdd6add7fe706394d42c60c5c9314dc6cf2".to_string(),
-        url: format!(
-            "https://wcampbell.dev/cpio/testing/test_simple_in_out_newc_files/{FILE_NAME}"
-        ),
-    }];
+    let mut config_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    config_path.push("../test-assets.toml");
+    let file_content = std::fs::read_to_string(config_path).unwrap();
+    let parsed: TestAsset = toml::from_str(&file_content).unwrap();
+    let assets = parsed.values();
 
-    dl_test_files_backoff(&asset_defs, TEST_PATH, true, Duration::from_secs(1)).unwrap();
+    dl_test_files_backoff(&assets, TEST_PATH, Duration::from_secs(1)).unwrap();
 
     let mut file = BufReader::new(File::open(&og_path).unwrap());
     let mut archive: ArchiveReader<NewcHeader> =
@@ -84,19 +80,18 @@ fn test_simple_in_out_newc_files() {
 // cpio -o -H newc > cpio-in.cpio
 #[test_log::test]
 fn test_simple_in_out_odc_files() {
-    const TEST_PATH: &str = "test-assets/test_simple_in_out_odc/";
-    let filepath = "odc.cpio";
+    const TEST_PATH: &str = ".";
+    let filepath = "test-assets/test_simple_in_out_odc/odc.cpio";
     let og_path = format!("{TEST_PATH}/{filepath}");
-    let new_path = format!("{TEST_PATH}/bytes.squashfs");
+    let new_path = format!("{TEST_PATH}/test-assets/test_simple_in_out_odc/bytes.squashfs");
 
-    const FILE_NAME: &str = "odc.cpio";
-    let asset_defs = [TestAssetDef {
-        filename: FILE_NAME.to_string(),
-        hash: "4cee2af1ecfec5ba14eabfb5821716782e79961d369a4279546fbff1be6d7bef".to_string(),
-        url: format!("https://wcampbell.dev/cpio/testing/test_simple_in_out_odc_files/{FILE_NAME}"),
-    }];
+    let mut config_path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    config_path.push("../test-assets.toml");
+    let file_content = std::fs::read_to_string(config_path).unwrap();
+    let parsed: TestAsset = toml::from_str(&file_content).unwrap();
+    let assets = parsed.values();
 
-    dl_test_files_backoff(&asset_defs, TEST_PATH, true, Duration::from_secs(1)).unwrap();
+    dl_test_files_backoff(&assets, TEST_PATH, Duration::from_secs(1)).unwrap();
 
     let mut file = BufReader::new(File::open(&og_path).unwrap());
     let mut archive: ArchiveReader<OdcHeader> =

@@ -38,14 +38,31 @@ writer.push_file(Cursor::new(a_data), a_header).unwrap();
 // write to archive
 writer.write().unwrap();
 ```
+
+# Features
 */
+#![cfg_attr(feature = "document-features", doc = document_features::document_features!())]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+#![no_std]
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+
+#[cfg(feature = "alloc")]
+use alloc::{
+    boxed::Box,
+    string::{String, ToString},
+    vec,
+    vec::Vec,
+};
 
 #[cfg(doctest)]
 #[doc = include_str!("../../README.md")]
 type _ReadmeTest = ();
 
-use std::fmt::Debug;
-use std::io::{Cursor, Read, Seek, SeekFrom, Write};
+use core::fmt::Debug;
+
+use no_std_io2::io::{Cursor, Read, Seek, SeekFrom, Write};
 
 use deku::DekuError;
 use deku::prelude::*;
@@ -120,7 +137,8 @@ impl DekuReader<'_, u32> for Data {
         let reader = reader.as_mut();
 
         // Save the current offset, this is where the file exists for reading later
-        let current_pos = reader.stream_position().unwrap();
+        #[allow(clippy::seek_from_current)]
+        let current_pos = reader.seek(SeekFrom::Current(0)).unwrap();
 
         // Seek past that file
         let position = filesize as i64;
@@ -249,7 +267,7 @@ impl<'b, C: CpioHeader> ArchiveReader<'b, C> {
 }
 
 /// `Write` + `Seek`
-pub trait WriteSeek: std::io::Write + Seek {}
+pub trait WriteSeek: Write + Seek {}
 impl<T: Write + Seek> WriteSeek for T {}
 
 /// Write cpio Archive and add data

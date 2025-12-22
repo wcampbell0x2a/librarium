@@ -1,8 +1,14 @@
 use crate::{CpioHeader, Header, OctalConversion};
+use core::ffi::CStr;
+use core::fmt;
+use core::str;
 use deku::prelude::*;
-use std::ffi::{CStr, CString};
-use std::fmt;
-use std::io::{Read, Seek, Write};
+use no_std_io2::io::{Read, Seek, Write};
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
+#[cfg(feature = "alloc")]
+use alloc::{ffi::CString, string::ToString, vec::Vec};
 
 const ODC_MAGIC: &[u8] = b"070707";
 
@@ -134,20 +140,20 @@ impl CpioHeader for OdcHeader {
     }
 }
 
-#[derive(DekuWrite, DekuRead, Debug, Copy, Clone, Default)]
-struct Octal<T: OctalConversion + fmt::Debug, const N: usize> {
+#[derive(DekuWrite, DekuRead, DekuSize, Debug, Copy, Clone, Default)]
+struct Octal<T: OctalConversion + fmt::Debug + DekuSize, const N: usize> {
     #[deku(reader = "Self::read(deku::reader)", writer = "self.write(deku::writer)")]
     pub value: T,
 }
 
-impl<T: OctalConversion + fmt::Debug, const N: usize> Octal<T, N> {
+impl<T: OctalConversion + fmt::Debug + DekuSize, const N: usize> Octal<T, N> {
     pub fn new(value: T) -> Self {
         Self { value }
     }
 
     fn read<R: Read + Seek>(reader: &mut Reader<R>) -> Result<T, DekuError> {
         let value = <[u8; N]>::from_reader_with_ctx(reader, ())?;
-        let s = std::str::from_utf8(&value).unwrap();
+        let s = str::from_utf8(&value).unwrap();
         let value = T::from_octal_string(s);
         Ok(value)
     }
