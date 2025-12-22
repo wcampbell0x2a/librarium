@@ -133,6 +133,7 @@ impl DekuReader<'_, u32> for Data {
         let reader = reader.as_mut();
 
         // Save the current offset, this is where the file exists for reading later
+        #[allow(clippy::seek_from_current)]
         let current_pos = reader.seek(SeekFrom::Current(0)).unwrap();
 
         // Seek past that file
