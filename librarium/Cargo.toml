@@ -35,4 +35,4 @@ document-features = { version = "0.2.10", optional = true }
 tempfile = "3.9.0"
 test-assets-ureq = "0.6.0"
 test-log = "0.2.16"
-toml = "0.8"
+toml = "0.9"
