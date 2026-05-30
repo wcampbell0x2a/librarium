@@ -6,7 +6,7 @@ use no_std_io2::io::{Read, Seek, Write};
 #[cfg(feature = "alloc")]
 extern crate alloc;
 #[cfg(feature = "alloc")]
-use alloc::{string::ToString, vec, vec::Vec};
+use alloc::{ffi::CString, string::ToString, vec, vec::Vec};
 
 const NEWC_MAGIC: [u8; 6] = [b'0', b'7', b'0', b'7', b'0', b'1'];
 // Size of magic field in bytes, derived from DekuSize
@@ -39,7 +39,7 @@ pub struct NewcHeader {
 impl CpioHeader for NewcHeader {
     fn from_header(header: Header, filesize: u64) -> Self {
         let name_bytes = header.name.into_bytes();
-        let name_len = name_bytes.len();
+        let name_len = name_bytes.len() + 1; // +1 for null terminator
         NewcHeader {
             magic: NEWC_MAGIC,
             ino: Ascii::new(header.ino),
@@ -53,9 +53,9 @@ impl CpioHeader for NewcHeader {
             devminor: Ascii::new(header.devminor.unwrap_or(0)),
             rdevmajor: Ascii::new(header.rdevmajor.unwrap_or(0)),
             rdevminor: Ascii::new(header.rdevminor.unwrap_or(0)),
-            namesize: Ascii::new(name_len as u32 + 1),
+            namesize: Ascii::new(name_len as u32),
             check: Ascii::new(0),
-            name: name_bytes.to_vec(),
+            name: CString::new(name_bytes).unwrap().into_bytes_with_nul(),
             name_pad: vec![0; pad_to_4(MAGIC_SIZE_BYTES + name_len)],
         }
     }
@@ -131,7 +131,7 @@ impl CpioHeader for NewcHeader {
     }
 
     fn namesize(&self) -> u32 {
-        self.namesize.value + 1
+        self.namesize.value
     }
 
     fn check(&self) -> Option<u32> {
