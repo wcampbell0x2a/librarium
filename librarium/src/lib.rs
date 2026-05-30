@@ -1,6 +1,14 @@
 /*!
 Reader and Writer library for cpio archives
 
+## Supported Formats
+
+| Format | Magic | Read | Write |
+|--------|-------|------|-------|
+| odc (Old ASCII) | `070707` | Yes | Yes |
+| newc (New ASCII / SVR4) | `070701` | Yes | Yes |
+| newc-crc (New CRC) | `070702` | Yes | Yes |
+
 ### Read
 ```rust, no_run
 # use std::ffi::CString;

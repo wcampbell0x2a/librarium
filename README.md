@@ -9,13 +9,21 @@ Librarium
 
 Library and binaries for the reading, creating, and modification of [cpio](https://en.wikipedia.org/wiki/Cpio) archives.
 
+## Supported Formats
+
+| Format | Magic | Read | Write | `uncpio` CLI |
+|--------|-------|------|-------|--------------|
+| odc (Old ASCII) | `070707` | Yes | Yes | Yes |
+| newc (New ASCII / SVR4) | `070701` | Yes | Yes | Yes |
+| newc-crc (New CRC) | `070702` | Yes | Yes | Yes |
+
 ## Library
 *Compiler support: requires rustc 1.85+*
 
 Add the following to your `Cargo.toml` file:
 ```toml
 [dependencies]
-librarium = "0.4.0"
+librarium = "0.5.0"
 ```
 
 ### Read
@@ -76,7 +84,7 @@ Usage: uncpio-librarium [OPTIONS] <ARCHIVE> <FORMAT>
 
 Arguments:
   <ARCHIVE>  cpio path
-  <FORMAT>   [possible values: odc, newc]
+  <FORMAT>   [possible values: odc, newc, newc-crc]
 
 Options:
   -o, --offset <BYTES>   Skip BYTES at the start of FILESYSTEM [default: 0]
