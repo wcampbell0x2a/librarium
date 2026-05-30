@@ -1193,9 +1193,9 @@ dependencies = [
 
 [[package]]
 name = "test-assets-ureq"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2635a5b5b8147d96709c7c10c78dcdf418d8e914611c734bf907795370f5556a"
+checksum = "f8917c1c22997df0ffac388ff2e11b09654839f24d7c71d4bd50eb52754a490d"
 dependencies = [
  "backon",
  "clap",
@@ -1204,6 +1204,7 @@ dependencies = [
  "rayon",
  "serde",
  "sha2",
+ "tempfile",
  "toml",
  "ureq",
 ]

@@ -4,7 +4,7 @@ use std::io::{BufReader, Seek};
 use std::path::{Path, PathBuf};
 
 use clap::{Parser, ValueEnum};
-use librarium::{ArchiveReader, CpioHeader, CpioReader, NewcHeader, OdcHeader};
+use librarium::{ArchiveReader, CpioHeader, CpioReader, NewcCrcHeader, NewcHeader, OdcHeader};
 use log::{error, info};
 
 use clap::builder::styling::*;
@@ -23,6 +23,7 @@ pub fn styles() -> clap::builder::Styles {
 enum Format {
     Odc,
     Newc,
+    NewcCrc,
 }
 
 /// tool to extract and list cpio filesystems
@@ -86,6 +87,32 @@ fn main() {
         }
         Format::Newc => {
             let mut archive: ArchiveReader<NewcHeader> =
+                match ArchiveReader::from_reader_with_offset(&mut file, args.offset) {
+                    Ok(a) => a,
+                    Err(e) => {
+                        error!("could not read archive: {e}");
+                        return;
+                    }
+                };
+            let len = archive.objects.inner.len();
+            for object in &archive.objects.inner[..len - 1] {
+                let filepath = Path::new(&args.dest).join(object.header.name());
+
+                info!("extracting: {:?} -> {:02x?}", object.header.name(), filepath);
+                if object.header.filesize() != 0 {
+                    let _ = fs::create_dir_all(filepath.parent().unwrap());
+                    let mut out = OpenOptions::new()
+                        .write(true)
+                        .create(true)
+                        .truncate(true)
+                        .open(filepath)
+                        .unwrap();
+                    archive.reader.extract_data(object, &mut out).unwrap();
+                }
+            }
+        }
+        Format::NewcCrc => {
+            let mut archive: ArchiveReader<NewcCrcHeader> =
                 match ArchiveReader::from_reader_with_offset(&mut file, args.offset) {
                     Ok(a) => a,
                     Err(e) => {

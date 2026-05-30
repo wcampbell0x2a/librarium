@@ -7,3 +7,13 @@ url = "https://wcampbell.dev/cpio/testing/test_simple_in_out_newc_files/cpio-in.
 filepath = "test-assets/test_simple_in_out_odc/odc.cpio"
 hash = "4cee2af1ecfec5ba14eabfb5821716782e79961d369a4279546fbff1be6d7bef"
 url = "https://wcampbell.dev/cpio/testing/test_simple_in_out_odc_files/odc.cpio"
+
+[test_assets.newc_crc_compat]
+filepath = "test-assets/test_newc_crc_compat/newc-crc-compat.cpio"
+hash = "0612cfdcfce46659063c7d18dc4f8aa033dbe8ddaff41be5cf44547002ce8166"
+url = "https://wcampbell.dev/cpio/testing/test_newc_crc_compat/newc-crc-compat.cpio"
+
+[test_assets.crc_compat]
+filepath = "test-assets/test_crc_compat/crc-compat.cpio"
+hash = "6ea2955965c9932ce25f16f2f7a2fb2f8fd30cfaa330fb5ae850ae653e4fa49e"
+url = "https://wcampbell.dev/cpio/testing/test_crc_compat/crc-compat.cpio"

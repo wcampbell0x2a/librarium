@@ -28,4 +28,7 @@ pub trait CpioHeader: for<'a> DekuReader<'a> + DekuWriter {
     fn check(&self) -> Option<u32>;
     fn name(&self) -> &str;
     fn data_pad(&self) -> usize;
+
+    /// Set the checksum field. Only meaningful for CRC variants (070702).
+    fn set_check(&mut self, _check: u32) {}
 }
