@@ -148,3 +148,99 @@ fn test_simple_in_out_odc_files() {
 
     assert_eq!(first, second);
 }
+
+#[cfg(unix)]
+mod metadata_conversion {
+    use std::os::unix::fs::MetadataExt;
+
+    use librarium::Header;
+
+    /// Verify that a temp file's metadata converts to a Header with matching fields.
+    #[test]
+    fn file_metadata_to_header() {
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        let metadata = tmp.as_file().metadata().unwrap();
+        let header = Header::try_from(&metadata).unwrap();
+
+        assert_eq!(header.ino, metadata.ino() as u32);
+        assert_eq!(header.mode, metadata.mode() as u32);
+        assert_eq!(header.uid, metadata.uid() as u32);
+        assert_eq!(header.gid, metadata.gid() as u32);
+        assert_eq!(header.nlink, metadata.nlink() as u32);
+        assert_eq!(header.mtime, metadata.mtime() as u32);
+        assert_eq!(header.dev, Some(metadata.dev() as u32));
+        assert_eq!(header.rdev, Some(metadata.rdev() as u32));
+    }
+
+    /// Verify that a directory's metadata preserves the directory mode bits.
+    #[test]
+    fn directory_metadata_to_header() {
+        let tmp = tempfile::tempdir().unwrap();
+        let metadata = std::fs::metadata(tmp.path()).unwrap();
+        let header = Header::try_from(&metadata).unwrap();
+
+        // S_IFDIR = 0o040000; directory bit must be set
+        assert!(header.mode & 0o040000 != 0, "expected directory mode bits to be set");
+        assert_eq!(header.mode, metadata.mode() as u32);
+    }
+
+    /// Verify that name defaults to an empty string.
+    #[test]
+    fn name_defaults_to_empty() {
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        let metadata = tmp.as_file().metadata().unwrap();
+        let header = Header::try_from(&metadata).unwrap();
+
+        assert_eq!(header.name, "");
+    }
+
+    /// Verify major/minor device number fields are populated.
+    #[test]
+    fn devmajor_devminor_populated() {
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        let metadata = tmp.as_file().metadata().unwrap();
+        let header = Header::try_from(&metadata).unwrap();
+
+        assert!(header.devmajor.is_some());
+        assert!(header.devminor.is_some());
+        assert!(header.rdevmajor.is_some());
+        assert!(header.rdevminor.is_some());
+    }
+
+    /// Round-trip: create a Header from metadata, write to an archive, read back,
+    /// and verify the fields match.
+    #[test]
+    fn roundtrip_metadata_header() {
+        use librarium::{ArchiveReader, ArchiveWriter, CpioHeader, NewcHeader};
+        use std::io::Cursor;
+
+        let tmp = tempfile::NamedTempFile::new().unwrap();
+        let metadata = tmp.as_file().metadata().unwrap();
+        let mut header = Header::try_from(&metadata).unwrap();
+        header.name = "test_file".to_string();
+
+        let data = b"hello world";
+
+        // Write archive to buffer
+        let mut out_buf = Vec::new();
+        {
+            let mut writer = ArchiveWriter::<NewcHeader>::new(Box::new(Cursor::new(&mut out_buf)));
+            writer.push_file(Cursor::new(data.as_slice()), header).unwrap();
+            writer.write().unwrap();
+        }
+
+        // Read back
+        let mut reader_cursor = Cursor::new(&out_buf);
+        let archive = ArchiveReader::<NewcHeader>::from_reader(&mut reader_cursor).unwrap();
+
+        // First object is our file; last is TRAILER
+        let read_header = archive.objects.inner[0].header.as_header();
+        assert_eq!(read_header.name, "test_file");
+        assert_eq!(read_header.ino, metadata.ino() as u32);
+        assert_eq!(read_header.mode, metadata.mode() as u32);
+        assert_eq!(read_header.uid, metadata.uid() as u32);
+        assert_eq!(read_header.gid, metadata.gid() as u32);
+        assert_eq!(read_header.nlink, metadata.nlink() as u32);
+        assert_eq!(read_header.mtime, metadata.mtime() as u32);
+    }
+}

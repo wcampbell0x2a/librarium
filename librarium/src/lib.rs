@@ -53,6 +53,9 @@ writer.write().unwrap();
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![no_std]
 
+#[cfg(feature = "std")]
+extern crate std;
+
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
@@ -410,6 +413,65 @@ pub struct Header {
     pub rdevmajor: Option<u32>,
     pub rdevminor: Option<u32>,
     pub name: String,
+}
+
+/// Extract the major device number from a raw `dev_t` value.
+///
+/// Uses the Linux kernel's device number encoding scheme.
+#[cfg(all(feature = "std", unix))]
+const fn linux_major(dev: u64) -> u32 {
+    (((dev >> 32) & 0xffff_f000) | ((dev >> 8) & 0x0000_0fff)) as u32
+}
+
+/// Extract the minor device number from a raw `dev_t` value.
+///
+/// Uses the Linux kernel's device number encoding scheme.
+#[cfg(all(feature = "std", unix))]
+const fn linux_minor(dev: u64) -> u32 {
+    (((dev >> 12) & 0xffff_ff00) | (dev & 0x0000_00ff)) as u32
+}
+
+/// Convert filesystem metadata into a cpio [`Header`].
+///
+/// The `name` field defaults to an empty string because [`std::fs::Metadata`]
+/// does not carry the filename. Callers should set the name after conversion.
+///
+/// # Example
+/// ```rust, no_run
+/// use std::fs;
+/// use librarium::Header;
+///
+/// let metadata = fs::metadata("/tmp/some_file").unwrap();
+/// let mut header = Header::try_from(&metadata).unwrap();
+/// header.name = "some_file".to_string();
+/// ```
+#[cfg(all(feature = "std", unix))]
+#[allow(clippy::unnecessary_cast)]
+impl TryFrom<&std::fs::Metadata> for Header {
+    type Error = CpioError;
+
+    fn try_from(metadata: &std::fs::Metadata) -> Result<Self, Self::Error> {
+        use std::os::unix::fs::MetadataExt;
+
+        let dev = metadata.dev();
+        let rdev = metadata.rdev();
+
+        Ok(Self {
+            ino: metadata.ino() as u32,
+            mode: metadata.mode() as u32,
+            uid: metadata.uid() as u32,
+            gid: metadata.gid() as u32,
+            nlink: metadata.nlink() as u32,
+            mtime: metadata.mtime() as u32,
+            dev: Some(dev as u32),
+            devmajor: Some(linux_major(dev)),
+            devminor: Some(linux_minor(dev)),
+            rdev: Some(rdev as u32),
+            rdevmajor: Some(linux_major(rdev)),
+            rdevminor: Some(linux_minor(rdev)),
+            name: String::new(),
+        })
+    }
 }
 
 /// Object in cpio archive
