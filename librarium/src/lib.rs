@@ -81,7 +81,7 @@ pub use read_seek::ReadSeek;
 pub(crate) use read_seek::ReaderWithOffset;
 
 pub mod newc;
-pub use newc::NewcHeader;
+pub use newc::{NewcCrcHeader, NewcHeader};
 pub mod odc;
 pub use odc::OdcHeader;
 
@@ -321,7 +321,17 @@ impl<'a, C: CpioHeader + Debug> ArchiveWriter<'a, C> {
         let filesize = reader.seek(SeekFrom::End(0))?;
         reader.seek(SeekFrom::Start(0))?;
 
-        let header = C::from_header(header, filesize);
+        let mut header = C::from_header(header, filesize);
+
+        // Compute checksum (sum of all data bytes) for CRC variants
+        if filesize > 0 {
+            let mut buf = vec![0u8; filesize as usize];
+            reader.read_exact(&mut buf)?;
+            let check = buf.iter().fold(0u32, |acc, &b| acc.wrapping_add(u32::from(b)));
+            header.set_check(check);
+            reader.seek(SeekFrom::Start(0))?;
+        }
+
         let object = Object::new(header, Data::Reader(Box::new(reader)));
         self.objects.inner.push(object);
 
