@@ -350,9 +350,7 @@ impl<'a, C: CpioHeader + Debug> ArchiveWriter<'a, C> {
 
         // pad bytes if required
         let bytes_used = (writer.bits_written / 8) as u64;
-        if self.pad_len != 0 {
-            // Pad out block_size to 4K
-            let blocks_used: u32 = u32::try_from(bytes_used).unwrap() / self.pad_len;
+        if let Some(blocks_used) = u32::try_from(bytes_used).unwrap().checked_div(self.pad_len) {
             let total_pad_len = (blocks_used + 1) * self.pad_len;
             let pad_len = total_pad_len - u32::try_from(bytes_used).unwrap();
 
