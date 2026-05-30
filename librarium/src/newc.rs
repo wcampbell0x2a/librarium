@@ -8,7 +8,7 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::{ffi::CString, string::ToString, vec, vec::Vec};
 
-const NEWC_MAGIC: [u8; 6] = [b'0', b'7', b'0', b'7', b'0', b'1'];
+const NEWC_MAGIC: [u8; 6] = *b"070701";
 const NEWC_CRC_MAGIC: [u8; 6] = *b"070702";
 // Size of magic field in bytes, derived from DekuSize
 const MAGIC_SIZE_BYTES: usize = <[u8; 6]>::SIZE_BYTES.unwrap();
