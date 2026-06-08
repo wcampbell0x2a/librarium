@@ -51,6 +51,7 @@ writer.write().unwrap();
 */
 #![cfg_attr(feature = "document-features", doc = document_features::document_features!())]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![warn(missing_docs)]
 #![no_std]
 
 #[cfg(feature = "std")]
@@ -81,18 +82,23 @@ use deku::writer::Writer;
 
 const TRAILER: &str = "TRAILER!!!";
 
+/// Trait for common cpio header operations.
 pub mod cpio_header;
 pub use cpio_header::CpioHeader;
 
+/// Error types returned by this library.
 pub mod error;
 pub use error::CpioError;
 
+/// Composable `Read + Seek` trait and helpers.
 pub mod read_seek;
 pub use read_seek::ReadSeek;
 pub(crate) use read_seek::ReaderWithOffset;
 
+/// New ASCII (SVR4) cpio header formats (`070701` and `070702`).
 pub mod newc;
 pub use newc::{NewcCrcHeader, NewcHeader};
+/// Old ASCII (odc) cpio header format (`070707`).
 pub mod odc;
 pub use odc::OdcHeader;
 
@@ -108,6 +114,7 @@ trait MutWriter<Ctx = ()> {
 impl<T: ReadSeek> CpioReader for T {}
 /// Extract data from cpio Archive
 pub trait CpioReader: ReadSeek {
+    /// Extract file data from an [`Object`] and write it to `writer`.
     fn extract_data<W, C: CpioHeader>(
         &mut self,
         object: &Object<C>,
@@ -187,6 +194,7 @@ impl MutWriter<u32> for Data {
 /// All objects in archive
 #[derive(DekuRead)]
 pub struct Objects<C: CpioHeader> {
+    /// The list of parsed archive entries, including the trailing sentinel.
     #[deku(until = "Self::is_last")]
     pub inner: Vec<Object<C>>,
 }
@@ -235,15 +243,19 @@ impl<C: CpioHeader> Objects<C> {
 /// }
 /// ```
 pub struct ArchiveReader<'b, C: CpioHeader> {
+    /// Underlying reader for data extraction.
     pub reader: Box<dyn ReadSeek + 'b>,
+    /// Parsed archive entries.
     pub objects: Objects<C>,
 }
 
 impl<'b, C: CpioHeader> ArchiveReader<'b, C> {
+    /// Parse an archive from a reader, starting at offset 0.
     pub fn from_reader(reader: impl ReadSeek + 'b) -> Result<Self, CpioError> {
         Self::from_reader_with_offset(reader, 0)
     }
 
+    /// Parse an archive from a reader, starting at the given byte `offset`.
     pub fn from_reader_with_offset(
         reader: impl ReadSeek + 'b,
         offset: u64,
@@ -258,6 +270,9 @@ impl<'b, C: CpioHeader> ArchiveReader<'b, C> {
         Ok(Self { reader, objects })
     }
 
+    /// Extract the first entry matching `name` and write its data to `writer`.
+    ///
+    /// Returns the [`Header`] on match, or `None` if no entry has that name.
     pub fn extract_by_name<W>(
         &mut self,
         name: &str,
@@ -318,6 +333,7 @@ impl<'a, C: CpioHeader + Debug> ArchiveWriter<'a, C> {
         Self { writer, objects: Objects { inner: vec![] }, pad_len: Self::DEFAULT_PAD_LEN }
     }
 
+    /// Set the image padding alignment in bytes.
     pub fn set_pad_len(&mut self, pad_len: u32) {
         self.pad_len = pad_len;
     }
@@ -397,21 +413,34 @@ impl<'a, C: CpioHeader + Debug> ArchiveWriter<'a, C> {
     }
 }
 
-/// Common representation of cpio Header
+/// Format-independent representation of a cpio header.
 #[derive(Default, Debug, PartialEq, Eq)]
 pub struct Header {
+    /// Inode number.
     pub ino: u32,
+    /// File mode and permissions.
     pub mode: u32,
+    /// Owner user ID.
     pub uid: u32,
+    /// Owner group ID.
     pub gid: u32,
+    /// Number of hard links.
     pub nlink: u32,
+    /// Last modification time (seconds since epoch).
     pub mtime: u32,
+    /// Combined device number (odc only).
     pub dev: Option<u32>,
+    /// Major device number of the device creating the file.
     pub devmajor: Option<u32>,
+    /// Minor device number of the device creating the file.
     pub devminor: Option<u32>,
+    /// Combined special-file device number (odc only).
     pub rdev: Option<u32>,
+    /// Major special-file device number.
     pub rdevmajor: Option<u32>,
+    /// Minor special-file device number.
     pub rdevminor: Option<u32>,
+    /// Filename of the entry.
     pub name: String,
 }
 
@@ -474,9 +503,10 @@ impl TryFrom<&std::fs::Metadata> for Header {
     }
 }
 
-/// Object in cpio archive
+/// Single entry (header + data) in a cpio archive.
 #[derive(DekuRead)]
 pub struct Object<C: CpioHeader> {
+    /// Parsed header for this entry.
     pub header: C,
     #[deku(ctx = "header.filesize()")]
     data: Data,
@@ -486,6 +516,7 @@ pub struct Object<C: CpioHeader> {
 }
 
 impl<C: CpioHeader> Object<C> {
+    /// Create a new `Object` with the given header and data.
     pub fn new(header: C, data: Data) -> Self {
         let data_pad = vec![0; header.data_pad()];
         Self { header, data, data_pad }
