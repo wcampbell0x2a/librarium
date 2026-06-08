@@ -23,7 +23,7 @@ Library and binaries for the reading, creating, and modification of [cpio](https
 Add the following to your `Cargo.toml` file:
 ```toml
 [dependencies]
-librarium = "0.5.0"
+librarium = "0.6.0"
 ```
 
 ### Read

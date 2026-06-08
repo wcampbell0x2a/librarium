@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 06-07-2025
+- Move MutWriter to dedicated module
+- Add documentation
+- Add `TryFrom<&std::fs::Metadata>` for Header
+- Add readme and library support matrix
+- Add NewC with CRC headers (b"070702")
+- Fix name field not containing null terminator
+
 ## [0.5.0] - 12-22-2025
 - Update deku to v0.20.2
 - Add multi-threaded file retrieval
