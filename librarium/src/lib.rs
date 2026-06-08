@@ -102,14 +102,8 @@ pub use newc::{NewcCrcHeader, NewcHeader};
 pub mod odc;
 pub use odc::OdcHeader;
 
-/// DekuWriter, but can write to self
-trait MutWriter<Ctx = ()> {
-    fn to_mutwriter<W: Write + Seek>(
-        &mut self,
-        deku_writer: &mut Writer<W>,
-        ctx: Ctx,
-    ) -> core::result::Result<(), DekuError>;
-}
+pub(crate) mod mut_writer;
+pub(crate) use mut_writer::MutWriter;
 
 impl<T: ReadSeek> CpioReader for T {}
 /// Extract data from cpio Archive
