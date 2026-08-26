@@ -8,7 +8,7 @@ edition = "2021"
 cargo-fuzz = true
 
 [dependencies]
-libfuzzer-sys = { version = "0.15.0", package = "libafl_libfuzzer" }
+libfuzzer-sys = { version = "0.16.0", package = "libafl_libfuzzer" }
 
 [dependencies.librarium]
 path = "../librarium"
