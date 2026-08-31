@@ -1,4 +1,4 @@
-use crate::{CpioHeader, Header, OctalConversion};
+use crate::{CpioHeader, Header, MAGIC_SIZE_BYTES, OctalConversion};
 use core::ffi::CStr;
 use core::fmt;
 use core::str;
@@ -10,13 +10,13 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::{ffi::CString, string::ToString, vec::Vec};
 
-const ODC_MAGIC: &[u8] = b"070707";
+pub(crate) const ODC_MAGIC: [u8; MAGIC_SIZE_BYTES] = *b"070707";
 
 /// Legacy ASCII-based format
 #[derive(DekuWrite, DekuRead, Debug)]
 pub struct OdcHeader {
     #[deku(assert_eq = "ODC_MAGIC")]
-    magic: [u8; 6],
+    magic: [u8; MAGIC_SIZE_BYTES],
     dev: Octal<u32, 6>,
     ino: Octal<u32, 6>,
     mode: Octal<u32, 6>,
@@ -38,7 +38,7 @@ impl CpioHeader for OdcHeader {
         let name_len = name_bytes.len() + 1;
 
         Self {
-            magic: ODC_MAGIC.try_into().unwrap(),
+            magic: ODC_MAGIC,
             dev: Octal::new(header.dev.unwrap_or(0)),
             ino: Octal::new(header.ino),
             mode: Octal::new(header.mode),
