@@ -28,7 +28,7 @@ jobs:
           - { target: x86_64-apple-darwin,          os: macos-14                       }
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Populate cache
         uses: ./.github/workflows/cache
 
@@ -50,7 +50,7 @@ jobs:
           tar -czvf librarium-${{ matrix.job.target }}.tar.gz \
               -C target/${{ matrix.job.target }}/dist/ $BINS
 
-      - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: librarium-${{ matrix.job.target }}.tar.gz
           path: librarium-${{ matrix.job.target }}.tar.gz
@@ -61,14 +61,14 @@ jobs:
       #     # disable static build for this job
       #     RUSTFLAGS: ""
       #   if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-      #   uses: obi1kenobi/cargo-semver-checks-action@c7306483f698c511eaf7416d1bf2e1958c90140f # v2.4
+      #   uses: obi1kenobi/cargo-semver-checks-action@6b69fcf40e9b5fb17adeb57e4b6ecd020649a239 # v2.9
       #   with:
       #     package: librarium
       #     feature-group: default-features
 
       - name: Upload binary to release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        uses: svenstaro/upload-release-action@04733e069f2d7f7f0b4aebc4fbdbce8613b03ccd # v2
+        uses: svenstaro/upload-release-action@29e53e917877a24fad85510ded594ab3c9ca12de # v2.11.5
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: librarium-${{ matrix.job.target }}.tar.gz
