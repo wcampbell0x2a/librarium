@@ -1,4 +1,4 @@
-use crate::{CpioHeader, Header};
+use crate::{CpioHeader, Header, MAGIC_SIZE_BYTES};
 use core::ffi::CStr;
 use deku::prelude::*;
 use no_std_io2::io::{Read, Seek, Write};
@@ -8,10 +8,8 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 use alloc::{ffi::CString, string::ToString, vec, vec::Vec};
 
-const NEWC_MAGIC: [u8; 6] = *b"070701";
-const NEWC_CRC_MAGIC: [u8; 6] = *b"070702";
-// Size of magic field in bytes, derived from DekuSize
-const MAGIC_SIZE_BYTES: usize = <[u8; 6]>::SIZE_BYTES.unwrap();
+pub(crate) const NEWC_MAGIC: [u8; MAGIC_SIZE_BYTES] = *b"070701";
+pub(crate) const NEWC_CRC_MAGIC: [u8; MAGIC_SIZE_BYTES] = *b"070702";
 
 /// Shared field accessors for newc-style headers (070701 and 070702).
 trait NewcFields {
@@ -49,7 +47,7 @@ fn newc_as_header(h: &impl NewcFields) -> Header {
     }
 }
 
-fn newc_from_header(header: Header, filesize: u64, magic: [u8; 6]) -> NewcRawFields {
+fn newc_from_header(header: Header, filesize: u64, magic: [u8; MAGIC_SIZE_BYTES]) -> NewcRawFields {
     let name_bytes = header.name.into_bytes();
     let name_len = name_bytes.len() + 1; // +1 for null terminator
     NewcRawFields {
@@ -74,7 +72,7 @@ fn newc_from_header(header: Header, filesize: u64, magic: [u8; 6]) -> NewcRawFie
 
 /// Intermediate struct returned by `newc_from_header` to initialize either variant.
 struct NewcRawFields {
-    magic: [u8; 6],
+    magic: [u8; MAGIC_SIZE_BYTES],
     ino: Ascii,
     mode: Ascii,
     uid: Ascii,
@@ -96,7 +94,7 @@ struct NewcRawFields {
 #[derive(DekuWrite, DekuRead, Debug)]
 pub struct NewcHeader {
     #[deku(assert_eq = "NEWC_MAGIC")]
-    magic: [u8; 6],
+    magic: [u8; MAGIC_SIZE_BYTES],
     ino: Ascii,
     mode: Ascii,
     uid: Ascii,
@@ -120,7 +118,7 @@ pub struct NewcHeader {
 #[derive(DekuWrite, DekuRead, Debug)]
 pub struct NewcCrcHeader {
     #[deku(assert_eq = "NEWC_CRC_MAGIC")]
-    magic: [u8; 6],
+    magic: [u8; MAGIC_SIZE_BYTES],
     ino: Ascii,
     mode: Ascii,
     uid: Ascii,

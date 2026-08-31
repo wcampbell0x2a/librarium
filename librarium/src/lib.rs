@@ -82,6 +82,9 @@ use deku::writer::Writer;
 
 const TRAILER: &str = "TRAILER!!!";
 
+/// Number of bytes in the magic field. Every supported format uses six bytes.
+pub(crate) const MAGIC_SIZE_BYTES: usize = <[u8; 6]>::SIZE_BYTES.unwrap();
+
 /// Trait for common cpio header operations.
 pub mod cpio_header;
 pub use cpio_header::CpioHeader;
@@ -94,6 +97,10 @@ pub use error::CpioError;
 pub mod read_seek;
 pub use read_seek::ReadSeek;
 pub(crate) use read_seek::ReaderWithOffset;
+
+/// Navigation of concatenated cpio archives.
+pub mod segment;
+pub use segment::{SegmentFormat, next_segment_offset, segment_format};
 
 /// New ASCII (SVR4) cpio header formats (`070701` and `070702`).
 pub mod newc;
@@ -241,6 +248,8 @@ pub struct ArchiveReader<'b, C: CpioHeader> {
     pub reader: Box<dyn ReadSeek + 'b>,
     /// Parsed archive entries.
     pub objects: Objects<C>,
+    /// Offset of this archive from the start of the underlying stream.
+    base_offset: u64,
 }
 
 impl<'b, C: CpioHeader> ArchiveReader<'b, C> {
@@ -255,13 +264,60 @@ impl<'b, C: CpioHeader> ArchiveReader<'b, C> {
         offset: u64,
     ) -> Result<Self, CpioError> {
         let mut reader: Box<dyn ReadSeek> = if offset == 0 {
+            // The reader can be at any position, so rewind it to the start.
+            let mut reader = reader;
+            reader.seek(SeekFrom::Start(0))?;
             Box::new(reader)
         } else {
             let reader = ReaderWithOffset::new(reader, offset)?;
             Box::new(reader)
         };
         let (_, objects) = Objects::from_reader((&mut reader, 0))?;
-        Ok(Self { reader, objects })
+        Ok(Self { reader, objects, base_offset: offset })
+    }
+
+    /// Offset of the first byte after the last entry, from the start of the
+    /// underlying stream.
+    ///
+    /// A file can hold more than one archive, one after the other. This offset
+    /// is the start of the padding that follows this archive. Give it to
+    /// [`next_segment_offset`] to find the next archive.
+    ///
+    /// # Example
+    /// Read every cpio archive in a concatenated file, such as an initramfs.
+    /// ```rust, no_run
+    /// # use std::fs::File;
+    /// # use librarium::{ArchiveReader, CpioHeader, NewcHeader, SegmentFormat, next_segment_offset, segment_format};
+    /// let mut file = File::open("initramfs.img").unwrap();
+    /// let mut offset = 0;
+    /// while let Some(start) = next_segment_offset(&mut file, offset).unwrap() {
+    ///     // A compressed segment gives `None`; the caller must decompress it.
+    ///     if segment_format(&mut file, start).unwrap() != Some(SegmentFormat::Newc) {
+    ///         break;
+    ///     }
+    ///     let archive = ArchiveReader::<NewcHeader>::from_reader_with_offset(&mut file, start).unwrap();
+    ///     for object in &archive.objects.inner {
+    ///         println!("{}", object.header.name());
+    ///     }
+    ///     offset = archive.end_offset();
+    /// }
+    /// ```
+    #[must_use]
+    pub fn end_offset(&self) -> u64 {
+        let Some(last) = self.objects.inner.last() else {
+            return self.base_offset;
+        };
+
+        // `Data::Offset` is relative to `base_offset` and points at the data of
+        // the last entry, which is the `TRAILER!!!` sentinel.
+        let Data::Offset(data_offset) = last.data else {
+            return self.base_offset;
+        };
+
+        self.base_offset
+            + data_offset
+            + u64::from(last.header.filesize())
+            + last.header.data_pad() as u64
     }
 
     /// Extract the first entry matching `name` and write its data to `writer`.
