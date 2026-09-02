@@ -20,10 +20,9 @@ Library and binaries for the reading, creating, and modification of [cpio](https
 ## Library
 *Compiler support: requires rustc 1.85+*
 
-Add the following to your `Cargo.toml` file:
-```toml
-[dependencies]
-librarium = "0.6.0"
+Add the crate to your project:
+```
+cargo add librarium
 ```
 
 ### Read
