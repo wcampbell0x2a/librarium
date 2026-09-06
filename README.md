@@ -21,7 +21,7 @@ Library and binaries for the reading, creating, and modification of [cpio](https
 *Compiler support: requires rustc 1.85+*
 
 Add the crate to your project:
-```
+```sh
 cargo add librarium
 ```
 
