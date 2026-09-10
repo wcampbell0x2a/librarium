@@ -790,7 +790,7 @@ dependencies = [
  "test-assets-ureq",
  "test-log",
  "thiserror",
- "toml 1.1.4+spec-1.1.0",
+ "toml 1.1.6+spec-1.1.0",
 ]
 
 [[package]]
@@ -1364,9 +1364,9 @@ dependencies = [
 
 [[package]]
 name = "test-assets-ureq"
-version = "0.6.2"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6476e497f504ad6833b361414409283de4eb129549cf5fd6c28ecbbc2bae2ce7"
+checksum = "da39b86a0e7e5e989ca4f714e2f5357fb4269de17c9a42c96b48cfaed0df8be3"
 dependencies = [
  "backon",
  "clap",
@@ -1474,9 +1474,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "1.1.4+spec-1.1.0"
+version = "1.1.6+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3aace63f4bbcdfc2c965b059de67119c89c4017a70d633be6c104910f67056f5"
+checksum = "920602543f0911ab71da12c50d59701da54c196d1a2bf5cb4b75667f137a406a"
 dependencies = [
  "indexmap",
  "serde_core",
