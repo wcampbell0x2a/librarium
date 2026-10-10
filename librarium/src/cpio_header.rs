@@ -2,8 +2,21 @@ use deku::prelude::*;
 
 use crate::Header;
 
+/// How a header format checks the file data
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Checksum {
+    /// The format has no checksum field.
+    None,
+    /// The sum of all data bytes, wrapped to 32 bits (newc-crc, `070702`).
+    ByteSum,
+}
+
 /// Common interface for all cpio header formats.
 pub trait CpioHeader: for<'a> DekuReader<'a> + DekuWriter {
+    /// The checksum this format stores. A writer reads the file data an extra time only
+    /// when the format stores one.
+    const CHECKSUM: Checksum = Checksum::None;
+
     /// Convert to the format-independent [`Header`].
     fn as_header(&self) -> Header;
     /// Construct from a format-independent [`Header`] and file size.

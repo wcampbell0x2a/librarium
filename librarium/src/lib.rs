@@ -82,12 +82,41 @@ use deku::writer::Writer;
 
 const TRAILER: &str = "TRAILER!!!";
 
+/// Bytes moved per read when file data is copied, so a large entry is never held in
+/// memory whole.
+const CHUNK_LEN: usize = 64 * 1024;
+
+/// Read exactly `len` bytes from `reader` and give them to `sink` one chunk at a time.
+///
+/// A reader that ends before `len` bytes gives an `UnexpectedEof` error.
+fn for_each_chunk<R, E>(
+    reader: &mut R,
+    len: u64,
+    mut sink: impl FnMut(&[u8]) -> Result<(), E>,
+) -> Result<(), E>
+where
+    R: Read + ?Sized,
+    E: From<no_std_io2::io::Error>,
+{
+    let buf_len = usize::try_from(len).map_or(CHUNK_LEN, |len| len.min(CHUNK_LEN));
+    let mut buf = vec![0u8; buf_len];
+    let mut remaining = len;
+    while remaining > 0 {
+        let n = usize::try_from(remaining).map_or(buf_len, |r| r.min(buf_len));
+        reader.read_exact(&mut buf[..n])?;
+        sink(&buf[..n])?;
+        remaining -= n as u64;
+    }
+
+    Ok(())
+}
+
 /// Number of bytes in the magic field. Every supported format uses six bytes.
 pub(crate) const MAGIC_SIZE_BYTES: usize = <[u8; 6]>::SIZE_BYTES.unwrap();
 
 /// Trait for common cpio header operations.
 pub mod cpio_header;
-pub use cpio_header::CpioHeader;
+pub use cpio_header::{Checksum, CpioHeader};
 
 /// Error types returned by this library.
 pub mod error;
@@ -124,16 +153,13 @@ pub trait CpioReader: ReadSeek {
     where
         W: Write + Seek,
     {
-        // found the file, seek forward
-        if let Data::Offset(offset) = object.data {
-            self.seek(SeekFrom::Start(offset)).unwrap();
-            let mut buf = vec![0; object.header.filesize() as usize];
-            self.read_exact(&mut buf).unwrap();
-            writer.write_all(&buf)?;
-            Ok(())
-        } else {
-            panic!("no offset! TODO improve this");
-        }
+        let Data::Offset(offset) = object.data else {
+            return Err(CpioError::NoData);
+        };
+        self.seek(SeekFrom::Start(offset))?;
+        for_each_chunk(self, u64::from(object.header.filesize()), |chunk| {
+            writer.write_all(chunk).map_err(CpioError::from)
+        })
     }
 }
 
@@ -171,24 +197,15 @@ impl MutWriter<u32> for Data {
     fn to_mutwriter<W: Write + Seek>(
         &mut self,
         writer: &mut Writer<W>,
-        _: u32,
+        filesize: u32,
     ) -> Result<(), DekuError> {
         match self {
-            Self::Reader(reader) => {
-                // read from reader
-                let mut data = vec![];
-                reader.read_to_end(&mut data).unwrap();
-
-                // write to deku
-                data.to_writer(writer, ())?;
-            }
-            Self::Empty => (),
-            _ => {
-                panic!("ah");
-            }
+            Self::Reader(reader) => for_each_chunk(reader.as_mut(), u64::from(filesize), |chunk| {
+                writer.write_bytes(chunk)
+            }),
+            Self::Empty => Ok(()),
+            Self::Offset(_) => Err(DekuError::Io(no_std_io2::io::ErrorKind::Unsupported)),
         }
-
-        Ok(())
     }
 }
 
@@ -397,16 +414,23 @@ impl<'a, C: CpioHeader + Debug> ArchiveWriter<'a, C> {
         // stream_len
         let filesize = reader.seek(SeekFrom::End(0))?;
         reader.seek(SeekFrom::Start(0))?;
+        if u32::try_from(filesize).is_err() {
+            return Err(CpioError::FileTooLarge(filesize));
+        }
 
         let mut header = C::from_header(header, filesize);
 
-        // Compute checksum (sum of all data bytes) for CRC variants
-        if filesize > 0 {
-            let mut buf = vec![0u8; filesize as usize];
-            reader.read_exact(&mut buf)?;
-            let check = buf.iter().fold(0u32, |acc, &b| acc.wrapping_add(u32::from(b)));
-            header.set_check(check);
-            reader.seek(SeekFrom::Start(0))?;
+        match C::CHECKSUM {
+            Checksum::None => (),
+            Checksum::ByteSum => {
+                let mut check = 0u32;
+                for_each_chunk(&mut reader, filesize, |chunk| {
+                    check = chunk.iter().fold(check, |acc, &b| acc.wrapping_add(u32::from(b)));
+                    Ok::<(), CpioError>(())
+                })?;
+                header.set_check(check);
+                reader.seek(SeekFrom::Start(0))?;
+            }
         }
 
         let object = Object::new(header, Data::Reader(Box::new(reader)));
@@ -433,29 +457,19 @@ impl<'a, C: CpioHeader + Debug> ArchiveWriter<'a, C> {
         self.push_file(data, header)?;
 
         let mut writer = Writer::new(&mut self.writer);
-        self.objects.to_mutwriter(&mut writer, ()).unwrap();
+        self.objects.to_mutwriter(&mut writer, ())?;
 
-        // pad bytes if required
+        // Pad up to the next multiple of `pad_len`. An image that already ends on a
+        // multiple still gets one full block, as earlier releases wrote.
         let bytes_used = (writer.bits_written / 8) as u64;
-        if let Some(blocks_used) = u32::try_from(bytes_used).unwrap().checked_div(self.pad_len) {
-            let total_pad_len = (blocks_used + 1) * self.pad_len;
-            let pad_len = total_pad_len - u32::try_from(bytes_used).unwrap();
-
-            // Write 1K at a time
-            let mut total_written = 0;
-            while ((writer.bits_written / 8) as u64) < (bytes_used + u64::from(pad_len)) {
-                let arr = &[0x00; 1024];
-
-                // check if last block to write
-                let len = if (pad_len - total_written) < 1024 {
-                    (pad_len - total_written) % 1024
-                } else {
-                    // else, full 1K
-                    1024
-                };
-
-                writer.write_bytes(&arr[..len.try_into().unwrap()])?;
-                total_written += len;
+        let pad_len = u64::from(self.pad_len);
+        if pad_len > 0 {
+            let mut remaining = pad_len - bytes_used % pad_len;
+            let zeros = [0x00; 1024];
+            while remaining > 0 {
+                let n = remaining.min(zeros.len() as u64) as usize;
+                writer.write_bytes(&zeros[..n])?;
+                remaining -= n as u64;
             }
         }
 

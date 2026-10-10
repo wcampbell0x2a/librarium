@@ -1,4 +1,4 @@
-use crate::{CpioHeader, Header, MAGIC_SIZE_BYTES};
+use crate::{Checksum, CpioHeader, Header, MAGIC_SIZE_BYTES};
 use core::ffi::CStr;
 use deku::prelude::*;
 use no_std_io2::io::{Read, Seek, Write};
@@ -307,6 +307,8 @@ impl CpioHeader for NewcHeader {
 }
 
 impl CpioHeader for NewcCrcHeader {
+    const CHECKSUM: Checksum = Checksum::ByteSum;
+
     fn from_header(header: Header, filesize: u64) -> Self {
         let f = newc_from_header(header, filesize, NEWC_CRC_MAGIC);
         Self {
