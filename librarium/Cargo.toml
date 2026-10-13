@@ -34,6 +34,6 @@ document-features = { version = "0.2.10", optional = true }
 [dev-dependencies]
 proptest = "1"
 tempfile = "3.9.0"
-test-assets-ureq = "0.6.1"
+test-assets-ureq = "0.7.0"
 test-log = "0.2.16"
 toml = "1"
